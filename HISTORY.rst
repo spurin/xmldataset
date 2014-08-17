@@ -12,3 +12,8 @@ History
 ++++++++++++++++++
 
 * Minor updates to supporting documents
+
+0.1.2 (2014-08-17)
+++++++++++++++++++
+
+* Minor updates to supporting documents

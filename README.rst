@@ -8,11 +8,7 @@ XML Dataset: xml parsing made easy
 .. image:: https://travis-ci.org/spurin/xmldataset.png?branch=master
         :target: https://travis-ci.org/spurin/xmldataset
 
-.. image:: https://pypip.in/d/xmldataset/badge.png
-        :target: https://crate.io/packages/xmldataset?version=latest
-
-
-XML Dataset
+XML Dataset: xml parsing made easy
 
 * Free software: BSD license
 * Documentation: http://xmldataset.rtfd.org.

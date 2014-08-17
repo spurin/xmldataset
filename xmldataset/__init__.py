@@ -5,7 +5,7 @@
 
 __author__ = 'James Spurin'
 __email__ = 'james@spurin.com'
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 import re
 import logging

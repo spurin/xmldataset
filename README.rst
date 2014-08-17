@@ -1,6 +1,6 @@
-===============================
-XML Dataset
-===============================
+==================================
+XML Dataset: xml parsing made easy
+==================================
 
 .. image:: https://badge.fury.io/py/xmldataset.png
     :target: http://badge.fury.io/py/xmldataset

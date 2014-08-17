@@ -16,8 +16,3 @@ XML Dataset
 
 * Free software: BSD license
 * Documentation: http://xmldataset.rtfd.org.
-
-Features
---------
-
-* TODO

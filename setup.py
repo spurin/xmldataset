@@ -24,7 +24,7 @@ setup(
     long_description=readme + '\n\n' + history,
     author='James Spurin',
     author_email='james@spurin.com',
-    url='https://github.com/james.spurin/xmldataset',
+    url='https://github.com/spurin/xmldataset',
     packages=[
         'xmldataset',
     ],

@@ -5,7 +5,7 @@
 
 __author__ = 'James Spurin'
 __email__ = 'james@spurin.com'
-__version__ = '0.1.6'
+__version__ = '0.1.7'
 
 import re
 import logging
@@ -345,7 +345,7 @@ class _XMLDataset(): # pylint: disable=R0902,R0903
                     self.data_structure[record['dataset']] = [{}]
                 else:
                     self.data_structure[record['dataset']].append({})
-                    
+
                 # ------------------------------------------------------------------------------
                 #    If global_values are defined, add them to the dataset
                 # ------------------------------------------------------------------------------

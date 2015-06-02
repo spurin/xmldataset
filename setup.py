@@ -19,7 +19,7 @@ history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 setup(
     name='xmldataset',
-    version='0.1.3',
+    version='0.1.7',
     description='XML Dataset: xml parsing made easy',
     long_description=readme + '\n\n' + history,
     author='James Spurin',

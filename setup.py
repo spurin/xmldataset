@@ -4,7 +4,6 @@
 import os
 import sys
 
-
 try:
     from setuptools import setup
 except ImportError:
@@ -19,7 +18,7 @@ history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 setup(
     name='xmldataset',
-    version='0.1.7',
+    version='1.0.0',
     description='XML Dataset: xml parsing made easy',
     long_description=readme + '\n\n' + history,
     author='James Spurin',
@@ -36,15 +35,12 @@ setup(
     zip_safe=False,
     keywords='xmldataset',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 5 - Production/Stable'
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
         "Programming Language :: Python :: 2",
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
     ],
     test_suite='tests',
 )

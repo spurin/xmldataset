@@ -64,3 +64,8 @@ History
   are merged into new datasets.  For example -
   
   parse_using_profile(xml, profile, global_values = { 'location' : 'Chorleywood'})
+
+1.0.0 (2016-06-18)
+++++++++++++++++++
+
+* First official release, revamped documentation

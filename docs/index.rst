@@ -3,34 +3,21 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-xmldataset: xml parsing made easy
+xmldataset: simple xml parsing
 ======================================
 
 .. toctree::
    :hidden:
 
-XML is a simple markup language that can be used to encode documents in both a human-readable and machine-readable format.  Yet, whilst it is simple, why aren't the means of gathering what we need from XML just as simple?
+A Python library that simplifies the extraction of datasets from XML content.
 
-Although there are a variety of approaches for gathering data from XML, most require an intermediate understanding of Python.  This however, changes with the use of **xmldataset**.
+XML is a simple markup format.  Whilst simple, extracting the data that we are interested in is often more complicated than it needs to be.
 
-**xmldataset** is designed to make the process of gathering your desired data into a Python structure as simple as possible through its plaintext collection schema, deliminated just like Python!
+**xmldataset** addresses this through a simple plaintext declaration that follows the structure of the XML document.  The declaration is indented to match the XML indentation, the data we are interested in tagged against a dataset.
 
-The parsing process is aided with the following:
-
-* A simple plaintext collection schema that describes the XML, the content of interest and the dataset in which it should be placed.  Datasets are returned as python structures, essentially, a dictionary with the key as the dataset and within a list of datasets (dictionaries).
-
-* Extendable options to to ensure that the data is collected into a dataset, just the way you want it.  If you're not happy with the element name in the XML schema, there's an option for that, if the data format does not meet your requirements, there's an option of inline processing to manipulate data on the fly.  Whilst simple, **xmldataset** also provides a variety of options that allow it to be extended past it's normal usage.
-
-An example of xmldataset in use is as follows -
+Take for example, an XML document that lists colleagues:
 
 ::
-
-   import xmldataset
-   import pprint
-
-   # Setup Pretty Printing
-   ppsetup = pprint.PrettyPrinter(indent=4)
-   pp = ppsetup.pprint
 
    # Declare XML
    xml = """<?xml version="1.0"?>
@@ -52,7 +39,14 @@ An example of xmldataset in use is as follows -
        </colleague>
    </colleagues>"""
 
-   # Declare Profile
+
+To capture the title, email and phone for each colleague, it is simple, using xmldataset:
+
+::
+
+   import xmldataset
+
+   # xmldataset declaration
    profile = """
    colleagues
        colleague
@@ -60,13 +54,10 @@ An example of xmldataset in use is as follows -
            email = dataset:colleagues
            phone = dataset:colleagues"""
 
-   # Capture the output
-   output = xmldataset.parse_using_profile(xml, profile)
+   # Print the output
+   print(xmldataset.parse_using_profile(xml, profile))
 
-   # Pretty Print the output
-   pp(output)
-
-Which results in the following output:
+Resulting in the following output:
 
 ::
 
@@ -89,7 +80,8 @@ Features
 * Dispatch mechanism, allows datasets to be dispatched for every N instance to allow asynchronous processing
 
 
-Contents:
+Contents
+--------
 
 .. toctree::
    :maxdepth: 2
@@ -103,7 +95,7 @@ Contents:
 Contributors
 ============
 
-``xmldataset`` is written and maintained by `James Spurin <https://github.com/james.spurin>`_,  The module stands on the shoulders of giants with it's use of ElementTree and cElementTree as the core XML parser.  Thanks go to the team of ``dataset``, namely `Friedrich Lindenberg <https://github.com/pudo>`_, `Gregor Aisch <https://github.com/gka>`_ and `Stefan Wehrmeyer <https://github.com/stefanw>`_ who's influence is very prevelant in this sphinx documentation (and might I add, this module would work fantastically alongside dataset).  Thanks to Kenneth Reitz and Armin Ronacher for the Sphinx template.
+``xmldataset`` is written and maintained by `James Spurin <https://github.com/james.spurin>`_,  The module stands on the shoulders of giants with it's use of ElementTree and cElementTree as the core XML parser.
 
 * :ref:`genindex`
 * :ref:`modindex`

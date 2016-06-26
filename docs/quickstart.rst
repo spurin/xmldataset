@@ -5,10 +5,17 @@ Quickstart
 
 Hi, welcome to the quick-start tutorial.
 
+Installing xmldataset
+----------------------
+
+Use pip to install xmldataset ::
+
+   pip install xmldataset
+
 Configuring xmldataset
 ----------------------
 
-At first you need to import the xmldataset package :) ::
+To get started, you need to import the xmldataset package :) ::
 
    import xmldataset
 

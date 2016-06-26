@@ -11,9 +11,9 @@ xmldataset: simple xml parsing
 
 A Python library that simplifies the extraction of datasets from XML content.
 
-XML is a simple markup format.  Whilst simple, extracting the data that we are interested in is often more complicated than it needs to be.
+XML is a simple markup format.  Whilst simple, extracting data of interest is often more complicated than it needs to be.
 
-**xmldataset** addresses this through a simple plaintext declaration that follows the structure of the XML document.  The declaration is indented to match the XML indentation, the data we are interested in tagged against a dataset.
+**xmldataset** addresses this through an easy to use plaintext declaration that follows the structure of the XML document.  The declaration is indented, matching the XML structure, the data we are interested in is tagged against a dataset.
 
 Take for example, an XML document that lists colleagues:
 
@@ -51,8 +51,8 @@ To capture the title, email and phone for each colleague, it is simple, using xm
    colleagues
        colleague
            title = dataset:colleagues
-           email = dataset:colleagues
-           phone = dataset:colleagues"""
+           phone = dataset:colleagues
+           email = dataset:colleagues"""
 
    # Print the output
    print(xmldataset.parse_using_profile(xml, profile))
@@ -77,6 +77,7 @@ Features
 * Handles missing data from the XML structure, if it's missing in the XML it is not populated in the dataset
 * Handles both XML Elements and Attributes using the plaintext collection schema (attributes are depicted as a sublevel of an element)
 * Easy to rename XML attributes/elements during processing to meet your requirements
+* Inline manipulation of XML content through the process mechanism
 * Dispatch mechanism, allows datasets to be dispatched for every N instance to allow asynchronous processing
 
 
@@ -96,7 +97,3 @@ Contributors
 ============
 
 ``xmldataset`` is written and maintained by `James Spurin <https://github.com/james.spurin>`_,  The module stands on the shoulders of giants with it's use of ElementTree and cElementTree as the core XML parser.
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

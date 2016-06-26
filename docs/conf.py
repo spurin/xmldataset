@@ -13,7 +13,7 @@ extensions = ['alabaster']
 html_static_path = ['_shared_static']
 html_theme = 'alabaster'
 html_theme_options = {
-    'logo': 'logo.png',
+    'logo': 'logo.jpg',
     'logo_name': True,
     'logo_text_align': 'center',
     'description': "Simplifying the process of extracting data from XML, so you can get on with more useful stuff",

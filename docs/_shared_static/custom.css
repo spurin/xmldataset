@@ -40,11 +40,11 @@ div.documentwrapper {
 }
 
 div.bodywrapper {
-    margin: 0 0 0 {{ theme_sidebar_width }};
+    margin: 0 0 0 260px;
 }
 
 div.sphinxsidebar {
-    width: {{ theme_sidebar_width }};
+    width: 260px;
     font-size: 14px;
     line-height: 1.5;
 }

@@ -1,5 +1,5 @@
 ==================================
-xmldataset: xml parsing made easy
+xmldataset: simple xml parsing
 ==================================
 
 .. image:: https://badge.fury.io/py/xmldataset.png
@@ -8,7 +8,7 @@ xmldataset: xml parsing made easy
 .. image:: https://travis-ci.org/spurin/xmldataset.png?branch=master
         :target: https://travis-ci.org/spurin/xmldataset
 
-XML Dataset: xml parsing made easy
+XML Dataset: simple xml parsing
 
 * Free software: BSD license
 * Documentation: https://xmldataset.readthedocs.io

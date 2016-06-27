@@ -11,4 +11,4 @@ XML Dataset: xml parsing made easy
 XML Dataset: xml parsing made easy
 
 * Free software: BSD license
-* Documentation: http://xmldataset.rtfd.org.
+* Documentation: https://xmldataset.readthedocs.io

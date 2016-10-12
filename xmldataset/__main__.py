@@ -1,6 +1,9 @@
 from xmldataset import parse_using_profile
 import pprint
 
+# ------------------------------------------------------------------------------
+#    Define Profile
+# ------------------------------------------------------------------------------
 profile = """
 catalog
     lowest
@@ -161,12 +164,12 @@ xml = """<?xml version="1.0"?>
 </catalog>"""
 
 # ------------------------------------------------------------------------------
-#    Call parse_using_profile
+#    Setup Pretty Printing
 # ------------------------------------------------------------------------------
-# Setup Pretty Printing
-
-# Setup Pretty Printing
 ppsetup = pprint.PrettyPrinter(indent=4)
 pp = ppsetup.pprint
 
+# ------------------------------------------------------------------------------
+#    Call parse_using_profile
+# ------------------------------------------------------------------------------
 print(parse_using_profile(xml, profile))

@@ -1,4 +1,4 @@
-from __init__ import parse_using_profile
+from xmldataset import parse_using_profile
 import pprint
 
 

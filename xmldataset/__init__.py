@@ -5,7 +5,7 @@
 
 __author__ = 'James Spurin'
 __email__ = 'james@spurin.com'
-__version__ = '0.1.7'
+__version__ = '1.0.1'
 
 import re
 import logging
@@ -310,7 +310,9 @@ class _XMLDataset(): # pylint: disable=R0902,R0903
         # ------------------------------------------------------------------------------
         if 'process' in record:
 
+            # ------------------------------------------------------------------------------
             # Capture the coderef from the object
+            # ------------------------------------------------------------------------------
             coderef = None
 
             if hasattr(self, 'process'):
@@ -451,10 +453,14 @@ class _XMLDataset(): # pylint: disable=R0902,R0903
             if dataset in self.data_structure:
                 if len(self.data_structure[dataset]) >= counter_trigger or flush:
 
+                    # ------------------------------------------------------------------------------
                     # Call the coderef with the payload, send as dict with dataset value
+                    # ------------------------------------------------------------------------------
                     counter_coderef( { dataset : self.data_structure[dataset] })
 
+                    # ------------------------------------------------------------------------------
                     # Delete the datastructure
+                    # ------------------------------------------------------------------------------
                     del self.data_structure[dataset]
 
     def _process_data(self, xml_root):
@@ -601,47 +607,29 @@ class _XMLDataset(): # pylint: disable=R0902,R0903
                                     # ------------------------------------------------------------------------------
                                     self._depth -= 1
 
+                                    # ------------------------------------------------------------------------------
                                     # Pop the last profile
+                                    # ------------------------------------------------------------------------------
                                     self._profile = self._profiles.pop()
 
                             # ------------------------------------------------------------------------------
-                            #    If there is not a match
+                            #    If there is not a match, check for defaults
                             # ------------------------------------------------------------------------------
                             if not match:
 
-                                # Need to walk the structure, ensuring that any default values are represented
-                                # Wherever applicable
-
-                                ## Future functionality, warn if items specified in profile but are not in the XML
-                                #print("DEBUG order value specified in profile but not found in XML - %s" % order_value)
-
-                                ##JS#def extract_defaults(order_value, profile_loop):
-
-                                    ##JS## If its a record, process it if a default value is set
-                                    ##JS#if '__record__' in profile_loop:
-                                        ##JS#for record in profile_loop['__record__']:
-                                            ##JS#if 'default' in record:
-                                                ##JS#self._process_record(record, order_value, record['default'])
-
-                                    ##JS## Otherwise, follow if the item is declared in __ALWAYS_FOLLOW__
-                                    ##JS#elif '__ALWAYS_FOLLOW__' in self._profile:
-                                        ##JS#if order_value in self._profile['__ALWAYS_FOLLOW__']:
-                                            ##JS#if '__order__' in profile_loop:
-                                                ##JS#for entry in profile_loop['__order__']:
-                                                    ##JS#extract_defaults(order_value=entry, profile_loop=profile_loop[entry])
-
-                                ##JS# Call recursive definition to process the tree for defaults wherever applicable
-                                ##JSextract_defaults(order_value=order_value, profile_loop = self._profile[order_value])
-
                                 def extract_defaults(order_value, profile_loop):
 
+                                    # ------------------------------------------------------------------------------
                                     # If its a record, process it if a default value is set
+                                    # ------------------------------------------------------------------------------
                                     if '__record__' in profile_loop[order_value]:
                                         for record in profile_loop[order_value]['__record__']:
                                             if 'default' in record:
                                                 self._process_record(record, order_value, record['default'])
 
+                                    # ------------------------------------------------------------------------------
                                     # Otherwise, follow if the item is declared in __ALWAYS_FOLLOW__
+                                    # ------------------------------------------------------------------------------
                                     elif '__ALWAYS_FOLLOW__' in profile_loop:
                                         if order_value in profile_loop['__ALWAYS_FOLLOW__']:
                                             if order_value in profile_loop:
@@ -650,7 +638,9 @@ class _XMLDataset(): # pylint: disable=R0902,R0903
                                                         if entry in profile_loop[order_value]:
                                                             extract_defaults(order_value=entry, profile_loop=profile_loop[order_value])
 
+                                # ------------------------------------------------------------------------------
                                 # Call recursive definition to process the tree for defaults wherever applicable
+                                # ------------------------------------------------------------------------------
                                 extract_defaults(order_value=order_value, profile_loop = self._profile)
 
                     # ------------------------------------------------------------------------------
@@ -712,7 +702,9 @@ class _XMLDataset(): # pylint: disable=R0902,R0903
                     if '__DATASET_PROCESSING__' in self._profile:
                         for process_entry in self._profile['__DATASET_PROCESSING__']:
 
+                            # ------------------------------------------------------------------------------
                             # Holder for __DATASET_PROCESSING__
+                            # ------------------------------------------------------------------------------
                             values = process_entry.split(':')
                             process = values[0]
                             dataset = values[1]
@@ -720,7 +712,9 @@ class _XMLDataset(): # pylint: disable=R0902,R0903
                             if hasattr(self, 'process'):
                                 if process in self.process:
 
+                                    # ------------------------------------------------------------------------------
                                     # Inline processing of the dataset_list
+                                    # ------------------------------------------------------------------------------
                                     self.process[process](self.data_structure[dataset][-1])
 
                                 else:

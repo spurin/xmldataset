@@ -636,3 +636,13 @@ As the title_and_genre is now dispatching 3 datasets, it's final dump is of a si
                                    'id': 'bk104',
                                    'number': '2',
                                    'title': "Oberon's Legacy"}]}
+
+Example 11 - Using xmldataset as an input to pandas
+------------------------------------------
+
+Thanks to keluc for this one, xmldataset works well as an input to pandas with the from_records method
+
+::
+
+   result = xmldataset.parse_using_profile(xml, profile)
+   df = pd.DataFrame.from_records(result['...'])

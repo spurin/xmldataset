@@ -467,7 +467,7 @@ class _XMLDataset(): # pylint: disable=R0902,R0903
         """Process data"""
 
         def process_element():
-            """ Docstring holder """
+            """ Process Elements """
 
             # ------------------------------------------------------------------------------
             #    Store the previous element if applicable
@@ -649,7 +649,9 @@ class _XMLDataset(): # pylint: disable=R0902,R0903
                     if '__EXTERNAL_VALUE__' in self._profile:
                         for dataset in self._profile['__EXTERNAL_VALUE__']:
 
+                            # ------------------------------------------------------------------------------
                             # Holder for __EXTERNAL_REFERENCES__
+                            # ------------------------------------------------------------------------------
                             values = dataset.split(':')
                             ext_dataset = values[0]
                             ext_name = values[1]

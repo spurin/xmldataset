@@ -3,7 +3,10 @@
 language: python
 
 python:
-  - "current"
+  - "nightly"
+  - "3.6-dev" # 3.6 development branch
+  - "3.5-dev" # 3.5 development branch
+  - "3.5"
   - "3.4"
   - "3.3"
   - "2.7"

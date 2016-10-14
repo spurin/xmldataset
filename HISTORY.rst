@@ -69,3 +69,10 @@ History
 ++++++++++++++++++
 
 * First official release, revamped documentation
+
+1.0.1 (2016-10-14)
+++++++++++++++++++
+
+* Tidied up core for main execution example (use python -m xmldataset to use the inbuilt example)
+* Added use of pandas to quick start
+* Added 3.4 to tox.ini, updated .travis.yml to include 3.4 and current

@@ -5,7 +5,7 @@
 
 __author__ = 'James Spurin'
 __email__ = 'james@spurin.com'
-__version__ = '0.1.7'
+__version__ = '1.0.1'
 
 import re
 import logging
@@ -310,7 +310,9 @@ class _XMLDataset(): # pylint: disable=R0902,R0903
         # ------------------------------------------------------------------------------
         if 'process' in record:
 
+            # ------------------------------------------------------------------------------
             # Capture the coderef from the object
+            # ------------------------------------------------------------------------------
             coderef = None
 
             if hasattr(self, 'process'):
@@ -451,17 +453,21 @@ class _XMLDataset(): # pylint: disable=R0902,R0903
             if dataset in self.data_structure:
                 if len(self.data_structure[dataset]) >= counter_trigger or flush:
 
+                    # ------------------------------------------------------------------------------
                     # Call the coderef with the payload, send as dict with dataset value
+                    # ------------------------------------------------------------------------------
                     counter_coderef( { dataset : self.data_structure[dataset] })
 
+                    # ------------------------------------------------------------------------------
                     # Delete the datastructure
+                    # ------------------------------------------------------------------------------
                     del self.data_structure[dataset]
 
     def _process_data(self, xml_root):
         """Process data"""
 
         def process_element():
-            """ Docstring holder """
+            """ Process Elements """
 
             # ------------------------------------------------------------------------------
             #    Store the previous element if applicable
@@ -601,47 +607,29 @@ class _XMLDataset(): # pylint: disable=R0902,R0903
                                     # ------------------------------------------------------------------------------
                                     self._depth -= 1
 
+                                    # ------------------------------------------------------------------------------
                                     # Pop the last profile
+                                    # ------------------------------------------------------------------------------
                                     self._profile = self._profiles.pop()
 
                             # ------------------------------------------------------------------------------
-                            #    If there is not a match
+                            #    If there is not a match, check for defaults
                             # ------------------------------------------------------------------------------
                             if not match:
 
-                                # Need to walk the structure, ensuring that any default values are represented
-                                # Wherever applicable
-
-                                ## Future functionality, warn if items specified in profile but are not in the XML
-                                #print("DEBUG order value specified in profile but not found in XML - %s" % order_value)
-
-                                ##JS#def extract_defaults(order_value, profile_loop):
-
-                                    ##JS## If its a record, process it if a default value is set
-                                    ##JS#if '__record__' in profile_loop:
-                                        ##JS#for record in profile_loop['__record__']:
-                                            ##JS#if 'default' in record:
-                                                ##JS#self._process_record(record, order_value, record['default'])
-
-                                    ##JS## Otherwise, follow if the item is declared in __ALWAYS_FOLLOW__
-                                    ##JS#elif '__ALWAYS_FOLLOW__' in self._profile:
-                                        ##JS#if order_value in self._profile['__ALWAYS_FOLLOW__']:
-                                            ##JS#if '__order__' in profile_loop:
-                                                ##JS#for entry in profile_loop['__order__']:
-                                                    ##JS#extract_defaults(order_value=entry, profile_loop=profile_loop[entry])
-
-                                ##JS# Call recursive definition to process the tree for defaults wherever applicable
-                                ##JSextract_defaults(order_value=order_value, profile_loop = self._profile[order_value])
-
                                 def extract_defaults(order_value, profile_loop):
 
+                                    # ------------------------------------------------------------------------------
                                     # If its a record, process it if a default value is set
+                                    # ------------------------------------------------------------------------------
                                     if '__record__' in profile_loop[order_value]:
                                         for record in profile_loop[order_value]['__record__']:
                                             if 'default' in record:
                                                 self._process_record(record, order_value, record['default'])
 
+                                    # ------------------------------------------------------------------------------
                                     # Otherwise, follow if the item is declared in __ALWAYS_FOLLOW__
+                                    # ------------------------------------------------------------------------------
                                     elif '__ALWAYS_FOLLOW__' in profile_loop:
                                         if order_value in profile_loop['__ALWAYS_FOLLOW__']:
                                             if order_value in profile_loop:
@@ -650,7 +638,9 @@ class _XMLDataset(): # pylint: disable=R0902,R0903
                                                         if entry in profile_loop[order_value]:
                                                             extract_defaults(order_value=entry, profile_loop=profile_loop[order_value])
 
+                                # ------------------------------------------------------------------------------
                                 # Call recursive definition to process the tree for defaults wherever applicable
+                                # ------------------------------------------------------------------------------
                                 extract_defaults(order_value=order_value, profile_loop = self._profile)
 
                     # ------------------------------------------------------------------------------
@@ -659,7 +649,9 @@ class _XMLDataset(): # pylint: disable=R0902,R0903
                     if '__EXTERNAL_VALUE__' in self._profile:
                         for dataset in self._profile['__EXTERNAL_VALUE__']:
 
+                            # ------------------------------------------------------------------------------
                             # Holder for __EXTERNAL_REFERENCES__
+                            # ------------------------------------------------------------------------------
                             values = dataset.split(':')
                             ext_dataset = values[0]
                             ext_name = values[1]
@@ -712,7 +704,9 @@ class _XMLDataset(): # pylint: disable=R0902,R0903
                     if '__DATASET_PROCESSING__' in self._profile:
                         for process_entry in self._profile['__DATASET_PROCESSING__']:
 
+                            # ------------------------------------------------------------------------------
                             # Holder for __DATASET_PROCESSING__
+                            # ------------------------------------------------------------------------------
                             values = process_entry.split(':')
                             process = values[0]
                             dataset = values[1]
@@ -720,7 +714,9 @@ class _XMLDataset(): # pylint: disable=R0902,R0903
                             if hasattr(self, 'process'):
                                 if process in self.process:
 
+                                    # ------------------------------------------------------------------------------
                                     # Inline processing of the dataset_list
+                                    # ------------------------------------------------------------------------------
                                     self.process[process](self.data_structure[dataset][-1])
 
                                 else:
@@ -779,187 +775,3 @@ def parse_using_profile(xml, profile, **options):
         #    Otherwise return the data structure
         # ------------------------------------------------------------------------------
         return obj.data_structure
-
-# ------------------------------------------------------------------------------
-#    When module is executed as a script
-# ------------------------------------------------------------------------------
-if __name__ == '__main__':
-
-    def to_upper(value):
-        pp(value)
-        return value.upper()
-
-    # ------------------------------------------------------------------------------
-    #    Define a profile
-    # ------------------------------------------------------------------------------
-    profile = """
-    catalog
-        lowest
-            book
-                author = dataset:title_and_author
-                title  = dataset:title_and_author
-                missing  = dataset:title_and_author
-    """
-
-    # ------------------------------------------------------------------------------
-    #    Define XML
-    # ------------------------------------------------------------------------------
-    xml = """<?xml version="1.0"?>
-<catalog>
-   <lowest number="123">
-      <specificbefore>
-         <specificvalue>123</specificvalue>
-      </specificbefore>
-      <book id="bk101">
-         <optionalexternal>
-            <externaldata>external_value1</externaldata>
-         </optionalexternal>
-         <author>Gambardella, Matthew</author>
-         <title>XML Developer's Guide</title>
-         <genre>Computer</genre>
-         <price>44.95</price>
-         <publish_date>2000-10-01</publish_date>
-         <description>An in-depth look at creating applications
-         with XML.</description>
-      </book>
-      <book id="bk102">
-         <author>Ralls, Kim</author>
-         <title>Midnight Rain</title>
-         <genre>Fantasy</genre>
-         <price>5.95</price>
-         <publish_date>2000-12-16</publish_date>
-         <description>A former architect battles corporate zombies,
-         an evil sorceress, and her own childhood to become queen
-         of the world.</description>
-      </book>
-      <book id="bk103">
-         <optionalexternal>
-            <externaldata>external_value2</externaldata>
-         </optionalexternal>
-         <author>Corets, Eva</author>
-         <title>Maeve Ascendant</title>
-         <genre>Fantasy</genre>
-         <price>5.95</price>
-         <publish_date>2000-11-17</publish_date>
-         <description>After the collapse of a nanotechnology
-         society in England, the young survivors lay the
-         foundation for a new society.</description>
-      </book>
-      <book id="bk104">
-         <author>Corets, Eva</author>
-         <title>Oberon's Legacy</title>
-         <genre>Fantasy</genre>
-         <price>5.95</price>
-         <publish_date>2001-03-10</publish_date>
-         <description>In post-apocalypse England, the mysterious
-         agent known only as Oberon helps to create a new life
-         for the inhabitants of London. Sequel to Maeve
-         Ascendant.</description>
-      </book>
-      <book id="bk105">
-         <optionalexternal>
-            <externaldata>external_value3</externaldata>
-         </optionalexternal>
-         <author>Corets, Eva</author>
-         <title>The Sundered Grail</title>
-         <genre>Fantasy</genre>
-         <price>5.95</price>
-         <publish_date>2001-09-10</publish_date>
-         <description>The two daughters of Maeve, half-sisters,
-         battle one another for control of England. Sequel to
-         Oberon's Legacy.</description>
-      </book>
-      <book id="bk106">
-         <author>Randall, Cynthia</author>
-         <title>Lover Birds</title>
-         <genre>Romance</genre>
-         <price>4.95</price>
-         <publish_date>2000-09-02</publish_date>
-         <description>When Carla meets Paul at an ornithology
-         conference, tempers fly as feathers get ruffled.</description>
-      </book>
-      <book id="bk107">
-         <optionalexternal>
-            <externaldata>external_value4</externaldata>
-         </optionalexternal>
-         <author>Thurman, Paula</author>
-         <title>Splish Splash</title>
-         <genre>Romance</genre>
-         <price>4.95</price>
-         <publish_date>2000-11-02</publish_date>
-         <description>A deep sea diver finds true love twenty
-         thousand leagues beneath the sea.</description>
-      </book>
-      <book id="bk108">
-         <author>Knorr, Stefan</author>
-         <title>Creepy Crawlies</title>
-         <genre>Horror</genre>
-         <price>4.95</price>
-         <publish_date>2000-12-06</publish_date>
-         <description>An anthology of horror stories about roaches,
-         centipedes, scorpions  and other insects.</description>
-      </book>
-      <book id="bk109">
-         <optionalexternal>
-            <externaldata>external_value5</externaldata>
-         </optionalexternal>
-         <author>Kress, Peter</author>
-         <title>Paradox Lost</title>
-         <genre>Science Fiction</genre>
-         <price>6.95</price>
-         <publish_date>2000-11-02</publish_date>
-         <description>After an inadvertant trip through a Heisenberg
-         Uncertainty Device, James Salway discovers the problems
-         of being quantum.</description>
-      </book>
-      <book id="bk110">
-         <author>O'Brien, Tim</author>
-         <title>Microsoft .NET: The Programming Bible</title>
-         <genre>Computer</genre>
-         <price>36.95</price>
-         <publish_date>2000-12-09</publish_date>
-         <description>Microsoft's .NET initiative is explored in
-         detail in this deep programmer's reference.</description>
-      </book>
-      <book id="bk111">
-         <optionalexternal>
-            <externaldata>external_value6</externaldata>
-         </optionalexternal>
-         <author>O'Brien, Tim</author>
-         <title>MSXML3: A Comprehensive Guide</title>
-         <genre>Computer</genre>
-         <price>36.95</price>
-         <publish_date>2000-12-01</publish_date>
-         <description>The Microsoft MSXML3 parser is covered in
-         detail, with attention to XML DOM interfaces, XSLT processing,
-         SAX and more.</description>
-      </book>
-      <book id="bk112">
-         <author>Galos, Mike</author>
-         <title>Visual Studio 7: A Comprehensive Guide</title>
-         <genre>Computer</genre>
-         <price>49.95</price>
-         <publish_date>2001-04-16</publish_date>
-         <description>Microsoft Visual Studio 7 is explored in depth,
-         looking at how Visual Basic, Visual C++, C#, and ASP+ are
-         integrated into a comprehensive development
-         environment.</description>
-      </book>
-      <specificafter>
-         <specificvalue>123</specificvalue>
-      </specificafter>
-   </lowest>
-</catalog>"""
-
-    # ------------------------------------------------------------------------------
-    #    Call parse_using_profile
-    # ------------------------------------------------------------------------------
-    # Setup Pretty Printing
-    import pprint
-
-    # Setup Pretty Printing
-    ppsetup = pprint.PrettyPrinter(indent=4)
-    pp = ppsetup.pprint
-
-    print(parse_using_profile(xml, profile))
-    #print(parse_using_profile(xml, profile, global_values = { 'james' : 'hello'}))

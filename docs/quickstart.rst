@@ -646,3 +646,318 @@ Thanks to keluc for this one, xmldataset works well as an input to pandas with t
 
    result = xmldataset.parse_using_profile(xml, profile)
    df = pd.DataFrame.from_records(result['...'])
+
+Example 12 - Getting multiple external values
+---------------------------------------------
+
+We need external values from multiple levels pulled into the output. Consider this input with additional tags such as specificvalue to demonstrate the example
+
+::
+
+   xml = """<?xml version="1.0"?>
+    <catalog>
+       <lowest number="123">
+          <specificbefore>
+             <specificvalue>123</specificvalue>
+          </specificbefore>
+          <book id="bk101">
+             <optionalexternalstart>
+                <externaldata>external_value1</externaldata>
+             </optionalexternalstart>
+             <author>Gambardella, Matthew</author>
+             <title>XML Developer's Guide</title>
+             <genre>Computer</genre>
+             <price>44.95</price>
+             <publish_date>2000-10-01</publish_date>
+             <description>An in-depth look at creating applications
+             with XML.</description>
+             <optionalexternalend>
+                <externaldata>external_value1</externaldata>
+             </optionalexternalend>
+          </book>
+          <book id="bk102">
+             <author>Ralls, Kim</author>
+             <title>Midnight Rain</title>
+             <genre>Fantasy</genre>
+             <price>5.95</price>
+             <publish_date>2000-12-16</publish_date>
+             <description>A former architect battles corporate zombies,
+             an evil sorceress, and her own childhood to become queen
+             of the world.</description>
+          </book>
+          <book id="bk103">
+             <optionalexternalstart>
+                <externaldata>external_value2</externaldata>
+             </optionalexternalstart>
+             <author>Corets, Eva</author>
+             <title>Maeve Ascendant</title>
+             <genre>Fantasy</genre>
+             <price>5.95</price>
+             <publish_date>2000-11-17</publish_date>
+             <description>After the collapse of a nanotechnology
+             society in England, the young survivors lay the
+             foundation for a new society.</description>
+             <optionalexternalend>
+                <externaldata>external_value2</externaldata>
+             </optionalexternalend>
+          </book>
+          <book id="bk104">
+             <author>Corets, Eva</author>
+             <title>Oberon's Legacy</title>
+             <genre>Fantasy</genre>
+             <price>5.95</price>
+             <publish_date>2001-03-10</publish_date>
+             <description>In post-apocalypse England, the mysterious
+             agent known only as Oberon helps to create a new life
+             for the inhabitants of London. Sequel to Maeve
+             Ascendant.</description>
+          </book>
+          <book id="bk105">
+             <optionalexternalstart>
+                <externaldata>external_value3</externaldata>
+             </optionalexternalstart>
+             <author>Corets, Eva</author>
+             <title>The Sundered Grail</title>
+             <genre>Fantasy</genre>
+             <price>5.95</price>
+             <publish_date>2001-09-10</publish_date>
+             <description>The two daughters of Maeve, half-sisters,
+             battle one another for control of England. Sequel to
+             Oberon's Legacy.</description>
+             <optionalexternalend>
+                <externaldata>external_value3</externaldata>
+             </optionalexternalend>
+          </book>
+          <book id="bk106">
+             <author>Randall, Cynthia</author>
+             <title>Lover Birds</title>
+             <genre>Romance</genre>
+             <price>4.95</price>
+             <publish_date>2000-09-02</publish_date>
+             <description>When Carla meets Paul at an ornithology
+             conference, tempers fly as feathers get ruffled.</description>
+          </book>
+          <book id="bk107">
+             <optionalexternalstart>
+                <externaldata>external_value4</externaldata>
+             </optionalexternalstart>
+             <author>Thurman, Paula</author>
+             <title>Splish Splash</title>
+             <genre>Romance</genre>
+             <price>4.95</price>
+             <publish_date>2000-11-02</publish_date>
+             <description>A deep sea diver finds true love twenty
+             thousand leagues beneath the sea.</description>
+             <optionalexternalend>
+                <externaldata>external_value4</externaldata>
+             </optionalexternalend>
+          </book>
+          <book id="bk108">
+             <author>Knorr, Stefan</author>
+             <title>Creepy Crawlies</title>
+             <genre>Horror</genre>
+             <price>4.95</price>
+             <publish_date>2000-12-06</publish_date>
+             <description>An anthology of horror stories about roaches,
+             centipedes, scorpions  and other insects.</description>
+          </book>
+          <book id="bk109">
+             <optionalexternalstart>
+                <externaldata>external_value5</externaldata>
+             </optionalexternalstart>
+             <author>Kress, Peter</author>
+             <title>Paradox Lost</title>
+             <genre>Science Fiction</genre>
+             <price>6.95</price>
+             <publish_date>2000-11-02</publish_date>
+             <description>After an inadvertant trip through a Heisenberg
+             Uncertainty Device, James Salway discovers the problems
+             of being quantum.</description>
+             <optionalexternalend>
+                <externaldata>external_value5</externaldata>
+             </optionalexternalend>
+          </book>
+          <book id="bk110">
+             <author>O'Brien, Tim</author>
+             <title>Microsoft .NET: The Programming Bible</title>
+             <genre>Computer</genre>
+             <price>36.95</price>
+             <publish_date>2000-12-09</publish_date>
+             <description>Microsoft's .NET initiative is explored in
+             detail in this deep programmer's reference.</description>
+          </book>
+          <book id="bk111">
+             <optionalexternalstart>
+                <externaldata>external_value6</externaldata>
+             </optionalexternalstart>
+             <author>O'Brien, Tim</author>
+             <title>MSXML3: A Comprehensive Guide</title>
+             <genre>Computer</genre>
+             <price>36.95</price>
+             <publish_date>2000-12-01</publish_date>
+             <description>The Microsoft MSXML3 parser is covered in
+             detail, with attention to XML DOM interfaces, XSLT processing,
+             SAX and more.</description>
+             <optionalexternalend>
+                <externaldata>external_value6</externaldata>
+             </optionalexternalend>
+          </book>
+          <book id="bk112">
+             <author>Galos, Mike</author>
+             <title>Visual Studio 7: A Comprehensive Guide</title>
+             <genre>Computer</genre>
+             <price>49.95</price>
+             <publish_date>2001-04-16</publish_date>
+             <description>Microsoft Visual Studio 7 is explored in depth,
+             looking at how Visual Basic, Visual C++, C#, and ASP+ are
+             integrated into a comprehensive development
+             environment.</description>
+          </book>
+          <book2 id="bk200">
+             <author>Grinberg, M</author>
+             <title>Flask Web Development</title>
+             <genre>Computer</genre>
+             <price>29.95</price>
+             <publish_date>2012-00-00</publish_date>
+             <description>Flask Development in Python</description>
+          </book2>
+          <specificafter>
+             <specificvalue>123</specificvalue>
+          </specificafter>
+       </lowest>
+    </catalog>"""
+
+Here is a profile that can pull number and specificvalue from different levels into the output.
+
+::
+
+   profile = """catalog
+    lowest
+        number = external_dataset:__external_value__1
+        specificbefore
+            specificvalue = external_dataset:__external_value__1
+        book
+            id     = dataset:1
+            author = dataset:1 
+            title  = dataset:1 
+            genre  = dataset:1
+            price  = dataset:1 
+            publish_date = dataset:1
+            description  = dataset:1
+            __EXTERNAL_VALUE__ = __external_value__1:number:1 __external_value__1:specificvalue:1"""
+
+This profile will output number and specificvalue coming from different levels into the output dataset 1
+
+::
+
+   [{'author': 'Gambardella, Matthew',
+          'description': 'An in-depth look at creating applications\n         with XML.',
+          'genre': 'Computer',
+          'id': 'bk101',
+          'number': '123',
+          'price': '44.95',
+          'specificvalue': '123',
+          'publish_date': '2000-10-01',
+          'title': "XML Developer's Guide"},
+         {'author': 'Ralls, Kim',
+          'description': 'A former architect battles corporate zombies,\n         an evil sorceress, and her own childhood to become queen\n         of the world.',
+          'genre': 'Fantasy',
+          'id': 'bk102',
+          'number': '123',
+          'price': '5.95',
+          'specificvalue': '123',
+          'publish_date': '2000-12-16',
+          'title': 'Midnight Rain'},
+         {'author': 'Corets, Eva',
+          'description': 'After the collapse of a nanotechnology\n         society in England, the young survivors lay the\n         foundation for a new society.',
+          'genre': 'Fantasy',
+          'id': 'bk103',
+          'number': '123',
+          'price': '5.95',
+          'specificvalue': '123',
+          'publish_date': '2000-11-17',
+          'title': 'Maeve Ascendant'},
+         {'author': 'Corets, Eva',
+          'description': 'In post-apocalypse England, the mysterious\n         agent known only as Oberon helps to create a new life\n         for the inhabitants of London. Sequel to Maeve\n         Ascendant.',
+          'genre': 'Fantasy',
+          'id': 'bk104',
+          'number': '123',
+          'price': '5.95',
+          'specificvalue': '123',
+          'publish_date': '2001-03-10',
+          'title': "Oberon's Legacy"},
+         {'author': 'Corets, Eva',
+          'description': "The two daughters of Maeve, half-sisters,\n         battle one another for control of England. Sequel to\n         Oberon's Legacy.",
+          'genre': 'Fantasy',
+          'id': 'bk105',
+          'number': '123',
+          'price': '5.95',
+          'specificvalue': '123',
+          'publish_date': '2001-09-10',
+          'title': 'The Sundered Grail'},
+         {'author': 'Randall, Cynthia',
+          'description': 'When Carla meets Paul at an ornithology\n         conference, tempers fly as feathers get ruffled.',
+          'genre': 'Romance',
+          'id': 'bk106',
+          'number': '123',
+          'price': '4.95',
+          'specificvalue': '123',
+          'publish_date': '2000-09-02',
+          'title': 'Lover Birds'},
+         {'author': 'Thurman, Paula',
+          'description': 'A deep sea diver finds true love twenty\n         thousand leagues beneath the sea.',
+          'genre': 'Romance',
+          'id': 'bk107',
+          'number': '123',
+          'price': '4.95',
+          'specificvalue': '123',
+          'publish_date': '2000-11-02',
+          'title': 'Splish Splash'},
+         {'author': 'Knorr, Stefan',
+          'description': 'An anthology of horror stories about roaches,\n         centipedes, scorpions  and other insects.',
+          'genre': 'Horror',
+          'id': 'bk108',
+          'number': '123',
+          'price': '4.95',
+          'specificvalue': '123',
+          'publish_date': '2000-12-06',
+          'title': 'Creepy Crawlies'},
+         {'author': 'Kress, Peter',
+          'description': 'After an inadvertant trip through a Heisenberg\n         Uncertainty Device, James Salway discovers the problems\n         of being quantum.',
+          'genre': 'Science Fiction',
+          'id': 'bk109',
+          'number': '123',
+          'price': '6.95',
+          'specificvalue': '123',
+          'publish_date': '2000-11-02',
+          'title': 'Paradox Lost'},
+         {'author': "O'Brien, Tim",
+          'description': "Microsoft's .NET initiative is explored in\n         detail in this deep programmer's reference.",
+          'genre': 'Computer',
+          'id': 'bk110',
+          'number': '123',
+          'price': '36.95',
+          'specificvalue': '123',
+          'publish_date': '2000-12-09',
+          'title': 'Microsoft .NET: The Programming Bible'},
+         {'author': "O'Brien, Tim",
+          'description': 'The Microsoft MSXML3 parser is covered in\n         detail, with attention to XML DOM interfaces, XSLT processing,\n         SAX and more.',
+          'genre': 'Computer',
+          'id': 'bk111',
+          'number': '123',
+          'price': '36.95',
+          'specificvalue': '123',
+          'publish_date': '2000-12-01',
+          'title': 'MSXML3: A Comprehensive Guide'},
+         {'author': 'Galos, Mike',
+          'description': 'Microsoft Visual Studio 7 is explored in depth,\n         looking at how Visual Basic, Visual C++, C#, and ASP+ are\n         integrated into a comprehensive development\n         environment.',
+          'genre': 'Computer',
+          'id': 'bk112',
+          'number': '123',
+          'price': '49.95',
+          'specificvalue': '123',
+          'publish_date': '2001-04-16',
+          'title': 'Visual Studio 7: A Comprehensive Guide'}]
+
+
+  

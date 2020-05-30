@@ -76,3 +76,10 @@ History
 * Tidied up core for main execution example (use python -m xmldataset to use the inbuilt example)
 * Added use of pandas to quick start
 * Added 3.4 to tox.ini, updated .travis.yml to include 3.4 and current
+
+1.0.2 (2020-05-30)
+++++++++++++++++++
+
+* Added 3.7, 3.8 to tox.ini, updated .travis.yml to include 3.7 and 3.8, removed 2.6 and 3.3 (no longer supported)
+* Implemented fix for duplicate results, thanks @davidmarcano
+* Code passed through black for standardisation

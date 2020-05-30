@@ -32,9 +32,7 @@ class TestCreateObject(unittest.TestCase):
 
     def setUp(self):
 
-        # ------------------------------------------------------------------------------
-        #    Define XML
-        # ------------------------------------------------------------------------------
+        # Define XML
         self.xml = """<?xml version="1.0"?>
 <catalog>
    <lowest number="123">
@@ -2765,6 +2763,31 @@ class TestCreateObject(unittest.TestCase):
                  'title': 'Visual Studio 7: A Comprehensive Guide'}]}
 
         output = parse_using_profile(self.xml, profile, global_values = {'location' : 'Chorleywood'})
+        self.maxDiff = None
+        self.assertDictEqual(expected, output)
+
+    def test_no_duplicates_attributes(self):
+
+        attribute_error_xml = """<?xml version="1.0"?>
+        <colleagues>
+            <colleague title="The Boss">John Smith</colleague>
+            <colleague title="Admin Assistant">Jane Doe</colleague>
+            <colleague title="Minion">Anne Other</colleague>
+        </colleagues>"""
+
+        profile = """
+        colleagues
+            colleague
+                __EXTERNAL_VALUE__ = colleagues:colleague:employees
+                title = dataset:employees
+            colleague = external_dataset:colleagues
+        """
+
+        expected = {  'employees': [   {'colleague': 'John Smith', 'title': 'The Boss'},
+                     {'colleague': 'Jane Doe', 'title': 'Admin Assistant'},
+                     {'colleague': 'Anne Other', 'title': 'Minion'}]}
+
+        output = parse_using_profile(attribute_error_xml, profile)
         self.maxDiff = None
         self.assertDictEqual(expected, output)
 

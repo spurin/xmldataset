@@ -226,7 +226,8 @@ class _XMLDataset(): # pylint: disable=R0902,R0903
                             if '__order__' not in current_profile_position:
                                 current_profile_position['__order__'] = [key]
                             else:
-                                current_profile_position['__order__'].append(key)
+                                if key not in current_profile_position['__order__']:
+                                    current_profile_position['__order__'].append(key)
 
                             # ------------------------------------------------------------------------------
                             #    Process records_unprocessed
@@ -275,7 +276,8 @@ class _XMLDataset(): # pylint: disable=R0902,R0903
                     if '__order__' not in current_profile_position:
                         current_profile_position['__order__'] = [token_data]
                     else:
-                        current_profile_position['__order__'].append(token_data)
+                        if token_data not in current_profile_position['__order__']:
+                            current_profile_position['__order__'].append(token_data)
 
                     # ------------------------------------------------------------------------------
                     #    Update the current position to the named dict

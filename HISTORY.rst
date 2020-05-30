@@ -83,3 +83,13 @@ History
 * Added 3.7, 3.8 to tox.ini, updated .travis.yml to include 3.7 and 3.8, removed 2.6 and 3.3 (no longer supported)
 * Implemented fix for duplicate results, thanks @davidmarcano
 * Code passed through black for standardisation
+
+1.0.3 (2020-05-30)
+++++++++++++++++++
+
+* Documentation, awesome badge
+
+1.0.4 (2020-05-30)
+++++++++++++++++++
+
+* History update

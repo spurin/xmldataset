@@ -15,7 +15,6 @@ XML Dataset: simple xml parsing
 
 .. image:: https://xmldataset.readthedocs.io/en/latest/_static/logo.jpg
 
-* Free software: BSD license
 * Documentation: https://xmldataset.readthedocs.io
 
 A Python library that simplifies the extraction of datasets from XML content.

@@ -2,14 +2,14 @@
 
 ## Development lead
 
-- James Spurin <james@spurin.com>
+- [James Spurin](https://github.com/spurin) <james@spurin.com>
 
 ## Contributors
 
 Thanks go to the following for their feedback and improvements:
 
-- KleinerNull
-- keluc
-- basaldella
-- davidmarcano
-- href
+- [KleinerNull](https://github.com/KleinerNull)
+- [keluc](https://github.com/keluc)
+- [basaldella](https://github.com/basaldella)
+- [davidmarcano](https://github.com/davidmarcano)
+- [href](https://github.com/href)

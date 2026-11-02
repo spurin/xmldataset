@@ -73,7 +73,9 @@ Directives are written inside the element they apply to.
 ### Errors
 
 Mistakes are reported with the line and column, and a suggestion where one is
-obvious:
+obvious. A directive that names a dataset or external value nothing in the
+profile produces (usually a typo), and a name that is both ignored and
+captured, are errors too.
 
 ```text
 xmldataset.ProfileError: line 5, column 22: unknown key 'datset' (did you mean 'dataset'?)
@@ -114,20 +116,27 @@ Each dataset is a list of records. These rules decide which values share a
 record:
 
 1. **A value belongs to the element its field is written under.** `title` under
-   `book` belongs to that `<book>`; an attribute belongs to its element.
+   `book` belongs to that `<book>`; an attribute belongs to its element. When a
+   field's own element has a block of its own in the profile (attributes or
+   children indented under it), its text belongs to that element, together with
+   its attributes and children.
 2. **A record never combines values from two occurrences of the same element.**
    A value from a new `<book>` starts a new record, even if the previous book
    was missing some of its fields.
 3. **A field that the record already has starts a new record**, unless the field
    has `list:true`.
 4. **Values from enclosing elements are copied into every record inside them**,
-   even when they appear after those records in the document.
+   meaning every record holding values from deeper inside that element, even
+   when the enclosing value appears after those records in the document.
 5. **Records are only created when a value is written**, so an element with
    nothing to capture produces no record. `global_values` are added to every
    record.
 
 Values from *different* child elements of the same element combine into one
-record (a `<header>` and a `<body>` inside one `<message>`, for example).
+record (a `<header>` and a `<body>` inside one `<message>`, for example). A
+record started by a repeated field (rule 3) only inherits values from enclosing
+elements, not the other values of its own element; use `list:true` to keep
+repeated values in one record.
 
 Here the second book has no author. Its record is left without one; the third
 book's author does not leak into it:
@@ -207,12 +216,18 @@ built from another. External values handle the rest, such as a value from a
 ```{include} _generated/examples/external-values/output.md
 ```
 
-A held value lasts as long as the element that encloses both the place it is
-captured and the place it is used. A shop without a number therefore never
-inherits the previous shop's. If the value appears *later* in the document than
+A held value lasts as long as the element that encloses both the places it is
+captured and the places it is used. With a shop-level number, a shop without
+one therefore never inherits the previous shop's. If the same external field
+is also captured somewhere outside the shops, its scope widens to cover all of
+them, and the most recent value wins. If the value appears *later* in the document than
 the records that use it, those records wait for it. If it never appears, the
 field is left out. `__NEW_EXTERNAL_VALUE_HOLDER__` forgets a held value
 explicitly when an element starts.
+
+Names in `__EXTERNAL_VALUE__` cannot contain `:`. To use a prefixed attribute
+such as `xl:href`, give it a plain name: `xl:href = external_dataset:links,name:href`,
+then `__EXTERNAL_VALUE__ = links:href:items`.
 
 ## Defaults and `__ALWAYS_FOLLOW__`
 
@@ -228,8 +243,9 @@ book
         pages = dataset:books,default:unknown
 ```
 
-A `<book>` without `<details>` still gets `pages: "unknown"`. `__ALWAYS_FOLLOW__`
-can be repeated at each level to reach deeper defaults.
+A `<book>` without `<details>` still gets `pages: "unknown"`. If `details` also
+captures its own text, its own default applies too. `__ALWAYS_FOLLOW__` can be
+repeated at each level to reach deeper defaults.
 
 ## Processing a whole record
 

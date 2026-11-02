@@ -83,6 +83,9 @@ Profile mistakes that 1.x silently ignored or misread are now errors, reported a
 
 - unknown modifiers such as `datset:` and unknown directives such as
   `__NEW_DATASETS__`;
+- directives that name a dataset or external value that nothing in the profile
+  produces, such as `__NEW_DATASET__ = d1,d2` (a comma instead of a space);
+- a name that is both ignored (`__IGNORE__`) and captured;
 - fields with neither `dataset:` nor `external_dataset:`;
 - indentation that does not line up with an outer level, indentation under a
   line that cannot contain anything, and mixed tabs and spaces.

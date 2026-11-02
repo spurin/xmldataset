@@ -1,0 +1,1 @@
+description = "Review #2. b is a sibling of the repeated a, not an enclosing value for the a:1 orphan; the record with c (from deeper <sub>) gets it."

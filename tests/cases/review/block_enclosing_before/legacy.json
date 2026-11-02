@@ -1,0 +1,12 @@
+{
+  "amounts": [
+    {
+      "number": "7",
+      "customer": "C",
+      "amount": "1"
+    },
+    {
+      "amount": "2"
+    }
+  ]
+}

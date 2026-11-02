@@ -67,6 +67,7 @@ def suggest(word: str, choices: tuple[str, ...]) -> str:
 class _Builder:
     name: str
     line: int = 0
+    ignore_line: int = 0
     fields: list[Field] = field(default_factory=list)
     children: dict[str, _Builder] = field(default_factory=dict)
     ignore: bool = False
@@ -82,6 +83,20 @@ class _Builder:
         return self.children[name]
 
     def freeze(self) -> Node:
+        if self.ignore and (
+            self.fields
+            or self.children
+            or self.new_dataset
+            or self.external_values
+            or self.resets
+            or self.processing
+            or self.always_follow
+        ):
+            raise ProfileError(
+                f"{self.name!r} is ignored, so it cannot also have fields or contents",
+                line=self.ignore_line,
+                column=1,
+            )
         for name, line, column in self.always_follow:
             if name not in self.children:
                 raise ProfileError(
@@ -132,7 +147,8 @@ class _Line:
             out = []
             while self.pos < len(text):
                 char = text[self.pos]
-                if char == "\\" and self.pos + 1 < len(text):
+                # Only \" (or \') and \\ are escapes; other backslashes are literal.
+                if char == "\\" and text[self.pos + 1 : self.pos + 2] in (quote, "\\"):
                     out.append(text[self.pos + 1])
                     self.pos += 2
                     continue
@@ -337,6 +353,7 @@ def parse_dsl(text: str) -> Profile:
         cur.skip_spaces()
         if line[cur.pos :] == IGNORE:
             child.ignore = True
+            child.ignore_line = number
             continue
         child.fields.extend(_parse_specs(cur))
         opener = child
@@ -402,19 +419,14 @@ def profile_to_dsl(profile: Profile, indent: str = "    ") -> str:
         inner = indent * (depth + 1)
         if not is_node_name(node.name):
             raise ProfileError(f"element name {node.name!r} cannot be written as text")
+        if node.ignore:  # the model guarantees an ignored node has nothing else
+            lines.append(f"{pad}{node.name} = {IGNORE}")
+            return
         if node.fields:
             lines.append(
                 f"{pad}{node.name} = " + " ".join(map(_spec_text, node.fields))
             )
-        has_body = bool(
-            node.children
-            or node.new_dataset
-            or node.external_values
-            or node.reset_external_values
-            or node.dataset_processing
-            or node.always_follow
-        )
-        if not node.fields and (has_body or not node.ignore):
+        else:
             lines.append(f"{pad}{node.name}")
         if node.new_dataset:
             for name in node.new_dataset:
@@ -447,8 +459,6 @@ def profile_to_dsl(profile: Profile, indent: str = "    ") -> str:
                 for d in node.dataset_processing
             ]
             lines.append(f"{inner}__DATASET_PROCESSING__ = " + " ".join(items))
-        if node.ignore:
-            lines.append(f"{pad}{node.name} = {IGNORE}")
 
     for root in profile.roots:
         emit(root, 0)

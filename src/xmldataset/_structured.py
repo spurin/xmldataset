@@ -76,6 +76,16 @@ def _names(value: Any, loc: str, what: str) -> tuple[str, ...]:
     return tuple(_name(item, f"{loc}[{i}]", what) for i, item in enumerate(items))
 
 
+def _keys_are_strings(values: Mapping[Any, Any], loc: str) -> None:
+    for key in values:
+        if not isinstance(key, str):
+            raise _err(
+                f"keys must be strings, not {type(key).__name__} (quote it; YAML reads"
+                " yes/no/on/off as booleans)",
+                loc,
+            )
+
+
 def _records(
     value: Any, loc: str, keys: tuple[str, ...], optional: tuple[str, ...] = ()
 ) -> list[dict[str, str]]:
@@ -86,6 +96,7 @@ def _records(
         where = f"{loc}[{i}]"
         if not isinstance(item, Mapping):
             raise _err(f"expected a mapping with keys {', '.join(keys)}", where)
+        _keys_are_strings(item, where)
         for key in item:
             if key not in keys and key not in optional:
                 raise _err(
@@ -99,6 +110,7 @@ def _records(
 
 
 def _spec(values: Mapping[str, Any], loc: str, prefix: str = "") -> Field:
+    _keys_are_strings(values, loc)
     for key in values:
         if key.removeprefix(prefix) not in SPEC_KEYS:
             choices = tuple(prefix + k for k in SPEC_KEYS)
@@ -183,6 +195,10 @@ def _node(name: Any, value: Any, loc: str) -> Node:
         if "$always_follow" in value
         else ()
     )
+    if ignore and len(value) > 1:
+        raise _err(
+            f"{name!r} is ignored, so it cannot also have fields or contents", loc
+        )
     child_names = {child.name for child in children}
     for follow in always_follow:
         if follow not in child_names:

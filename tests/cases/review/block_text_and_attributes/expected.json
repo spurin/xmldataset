@@ -1,0 +1,17 @@
+{
+  "lines": [
+    {
+      "note": "first"
+    },
+    {
+      "note": "second",
+      "line": "2",
+      "sku": "A"
+    },
+    {
+      "note": "second",
+      "line": "3",
+      "sku": "B"
+    }
+  ]
+}

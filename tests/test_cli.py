@@ -141,6 +141,18 @@ def test_validate_reports_errors_with_locations(
     )
 
 
+def test_validate_checks_directive_references(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    bad = tmp_path / "bad.txt"
+    bad.write_text(
+        "shop\n  book = dataset:b\n  __NEW_DATASET__ = bk\n", encoding="utf-8"
+    )
+    code, _, err = run(capsys, "validate", str(bad))
+    assert code == 1
+    assert "__NEW_DATASET__ names 'bk', which no field sends values to" in err
+
+
 def test_errors_are_reported_without_a_traceback(
     files: tuple[Path, Path], tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

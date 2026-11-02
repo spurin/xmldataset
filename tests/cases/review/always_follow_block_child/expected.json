@@ -1,0 +1,13 @@
+{
+  "books": [
+    {
+      "title": "A",
+      "pages": "unknown"
+    },
+    {
+      "title": "B",
+      "details_text": "d",
+      "pages": "9"
+    }
+  ]
+}

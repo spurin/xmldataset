@@ -11,6 +11,3 @@ JSON profiles all work out of the box; the only dependency is
 [PyYAML](https://pypi.org/project/PyYAML/).
 
 Installing the package also installs the [`xmldataset` command](cli.md).
-
-Upgrading from 1.x? Read [Upgrading from 1.x](migration.md) first: some outputs
-change, because several long-standing bugs are fixed.

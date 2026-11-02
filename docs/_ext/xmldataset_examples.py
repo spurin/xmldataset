@@ -6,7 +6,6 @@ For every example this writes, under docs/_generated/examples/<name>/:
   JSON are generated from profile.dsl with xmldataset's own converter.
 - ``input.md``: the XML input.
 - ``output.md``: the output (expected.json).
-- ``legacy.md``: what xmldataset 1.x produced, when it differs.
 
 Before writing anything, each example is run with all three profile formats and
 must produce expected.json exactly; otherwise the build fails. It also copies
@@ -80,11 +79,6 @@ def _render(example: Path, out: Path) -> None:
     (out / "output.md").write_text(
         _fence("json", json.dumps(expected, indent=2, ensure_ascii=False))
     )
-    legacy = example / "legacy.json"
-    if legacy.exists():
-        (out / "legacy.md").write_text(
-            _fence("json", legacy.read_text(encoding="utf-8"))
-        )
 
 
 def generate(app: Sphinx) -> None:

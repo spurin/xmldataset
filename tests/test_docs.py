@@ -19,7 +19,7 @@ BLOCK = re.compile(r"^```pycon\n(.*?)^```", re.MULTILINE | re.DOTALL)
 
 @pytest.mark.parametrize("page", PAGES, ids=lambda p: p.name)
 def test_pycon_examples(page: Path) -> None:
-    blocks = BLOCK.findall(page.read_text())
+    blocks = BLOCK.findall(page.read_text(encoding="utf-8"))
     if not blocks:
         pytest.skip("no pycon examples")
     parser = doctest.DocTestParser()
@@ -35,7 +35,7 @@ def test_pycon_examples(page: Path) -> None:
 def test_readme_yaml_and_json_match_the_converter() -> None:
     import xmldataset
 
-    readme = (ROOT / "README.md").read_text()
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
     profile = xmldataset.compile_profile(
         "colleagues\n    colleague\n        title = dataset:colleagues\n"
         "        email = dataset:colleagues,default:none\n"

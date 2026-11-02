@@ -55,18 +55,18 @@ def _options(options: dict[str, Any]) -> dict[str, Any]:
 
 def load_case(path: Path) -> Case:
     meta = (
-        tomllib.loads((path / "case.toml").read_text())
+        tomllib.loads((path / "case.toml").read_text(encoding="utf-8"))
         if (path / "case.toml").exists()
         else {}
     )
-    expected = json.loads((path / "expected.json").read_text())
+    expected = json.loads((path / "expected.json").read_text(encoding="utf-8"))
     legacy_file = path / "legacy.json"
     return Case(
         path=path,
-        xml=(path / meta.get("input", "input.xml")).read_text(),
-        profile=(path / "profile.dsl").read_text(),
+        xml=(path / meta.get("input", "input.xml")).read_text(encoding="utf-8"),
+        profile=(path / "profile.dsl").read_text(encoding="utf-8"),
         expected=expected,
-        legacy=json.loads(legacy_file.read_text())
+        legacy=json.loads(legacy_file.read_text(encoding="utf-8"))
         if legacy_file.exists()
         else expected,
         options=_options(meta.get("options", {})),

@@ -47,10 +47,10 @@ def _options(meta: dict[str, Any]) -> dict[str, Any]:
 
 
 def _render(example: Path, out: Path) -> None:
-    meta = tomllib.loads((example / "case.toml").read_text())
-    xml = (example / meta.get("input", "input.xml")).read_text()
-    text = (example / "profile.dsl").read_text()
-    expected = json.loads((example / "expected.json").read_text())
+    meta = tomllib.loads((example / "case.toml").read_text(encoding="utf-8"))
+    xml = (example / meta.get("input", "input.xml")).read_text(encoding="utf-8")
+    text = (example / "profile.dsl").read_text(encoding="utf-8")
+    expected = json.loads((example / "expected.json").read_text(encoding="utf-8"))
     profile = xmldataset.compile_profile(text)
     yaml_text, json_text = profile.to_yaml(), profile.to_json()
     options = _options(meta)
@@ -73,15 +73,18 @@ def _render(example: Path, out: Path) -> None:
         _tab("JSON", "json", _fence("json", json_text)),
     ]
     (out / "profile.md").write_text(
-        "::::{tab-set}\n:sync-group: profile\n\n" + "\n".join(tabs) + "::::\n"
+        "::::{tab-set}\n:sync-group: profile\n\n" + "\n".join(tabs) + "::::\n",
+        encoding="utf-8",
     )
-    (out / "input.md").write_text(_fence("xml", xml))
+    (out / "input.md").write_text(_fence("xml", xml), encoding="utf-8")
     (out / "output.md").write_text(
         _fence("json", json.dumps(expected, indent=2, ensure_ascii=False))
     )
     legacy = example / "legacy.json"
     if legacy.exists():
-        (out / "legacy.md").write_text(_fence("json", legacy.read_text()))
+        (out / "legacy.md").write_text(
+            _fence("json", legacy.read_text(encoding="utf-8"))
+        )
 
 
 def generate(app: Sphinx) -> None:

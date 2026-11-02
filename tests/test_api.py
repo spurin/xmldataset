@@ -23,14 +23,22 @@ from xmldataset import (
 )
 
 CASES = Path(__file__).parent / "cases"
-CATALOG = (CASES / "_fixtures" / "catalog.xml").read_text()
-BOOKS = (CASES / "v1_suite" / "single_dataset" / "profile.dsl").read_text()
-BOOKS_EXPECTED = json.loads(
-    (CASES / "v1_suite" / "single_dataset" / "expected.json").read_text()
+CATALOG = (CASES / "_fixtures" / "catalog.xml").read_text(encoding="utf-8")
+BOOKS = (CASES / "v1_suite" / "single_dataset" / "profile.dsl").read_text(
+    encoding="utf-8"
 )
-TWO_DATASETS = (CASES / "v1_suite" / "multi_datasets" / "profile.dsl").read_text()
+BOOKS_EXPECTED = json.loads(
+    (CASES / "v1_suite" / "single_dataset" / "expected.json").read_text(
+        encoding="utf-8"
+    )
+)
+TWO_DATASETS = (CASES / "v1_suite" / "multi_datasets" / "profile.dsl").read_text(
+    encoding="utf-8"
+)
 TWO_EXPECTED = json.loads(
-    (CASES / "v1_suite" / "multi_datasets" / "expected.json").read_text()
+    (CASES / "v1_suite" / "multi_datasets" / "expected.json").read_text(
+        encoding="utf-8"
+    )
 )
 SIMPLE = "r\n    i\n        a = dataset:d\n        b = dataset:d"
 
@@ -223,7 +231,7 @@ def test_str_with_encoding_declaration() -> None:
 
 def test_path_and_file_objects(tmp_path: Path) -> None:
     file = tmp_path / "doc.xml"
-    file.write_text(SMALL)
+    file.write_text(SMALL, encoding="utf-8")
     assert parse_using_profile(file, SIMPLE) == SMALL_EXPECTED
     with file.open("rb") as binary:
         assert parse_using_profile(binary, SIMPLE) == SMALL_EXPECTED
@@ -233,7 +241,7 @@ def test_path_and_file_objects(tmp_path: Path) -> None:
 def test_a_str_that_is_a_file_name_gets_a_hint(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    (tmp_path / "doc.xml").write_text(SMALL)
+    (tmp_path / "doc.xml").write_text(SMALL, encoding="utf-8")
     monkeypatch.chdir(tmp_path)
     with pytest.raises(ConfigurationError, match=r"pathlib.Path"):
         parse_using_profile("doc.xml", SIMPLE)
@@ -357,7 +365,7 @@ def test_records_are_yielded_before_the_document_ends() -> None:
 
 def test_memory_stays_flat_for_large_documents(tmp_path: Path) -> None:
     file = tmp_path / "big.xml"
-    with file.open("w") as fh:
+    with file.open("w", encoding="utf-8") as fh:
         fh.write("<catalog>")
         for i in range(100_000):
             fh.write(f"<book id='{i}'><title>T{i}</title><author>A{i}</author></book>")
@@ -437,12 +445,12 @@ def test_load_profile_picks_the_format_from_the_extension(tmp_path: Path) -> Non
         ("p.yaml", profile.to_yaml()),
         ("p.json", profile.to_json()),
     ]:
-        (tmp_path / name).write_text(text)
+        (tmp_path / name).write_text(text, encoding="utf-8")
         assert xmldataset.load_profile(tmp_path / name) == profile
 
 
 def test_load_profile_reports_bad_json(tmp_path: Path) -> None:
-    (tmp_path / "p.json").write_text('{"r": ')
+    (tmp_path / "p.json").write_text('{"r": ', encoding="utf-8")
     with pytest.raises(ProfileError, match="invalid JSON") as info:
         xmldataset.load_profile(tmp_path / "p.json")
     assert info.value.line == 1

@@ -1,0 +1,1 @@
+description = "Re-check #1. The order's id reaches every record holding values from inside a <line> (rule 4), even though the repeated note split them off."

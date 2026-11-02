@@ -35,6 +35,7 @@ A new engine, profile formats and tooling. Most profiles work unchanged.
 
 - The engine streams the document in document order, in bounded memory, with no
   limit on document depth.
+- A record never combines values from two occurrences of the same element.
 - Values from enclosing elements are copied into every record inside them, even
   when they appear after those records.
 - Records are created only when a value is written. Below an element with
@@ -42,7 +43,9 @@ A new engine, profile formats and tooling. Most profiles work unchanged.
   any element carrying it starts a new record.
 - External values are scoped to the element that encloses their source and
   their use, and may be used before they appear in the document.
-- Profiles are validated strictly, with a line and column for each problem:
+- Profiles are validated strictly when they are loaded, with the line and
+  column (or, for references and YAML/JSON profiles, the element) of each
+  problem:
   unknown modifiers or directives, fields without a dataset, inconsistent
   indentation, directives naming something the profile never produces, and
   names that are both ignored and captured. Repeated names merge.

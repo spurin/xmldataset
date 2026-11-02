@@ -1,0 +1,1 @@
+description = "Re-check #1 control. A late <id> reaches the same two line records; the note:a orphan is same-level, so it is not one of them."

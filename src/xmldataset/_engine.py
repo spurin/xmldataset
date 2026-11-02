@@ -40,6 +40,7 @@ RECORD_ELEMENT = -1  # pseudo node id: the __NEW_DATASET__ element a record belo
 
 OccPath = tuple[tuple[int, int], ...]  # ((profile node id, occurrence id), ...)
 ExternalKey = tuple[str, str]  # (external dataset, field name)
+ContextValue = tuple[Any, "OccPath", bool, "tuple[ExternalKey, int] | None"]
 
 
 class RNode:
@@ -186,9 +187,19 @@ class Runtime:
         while pending:
             node, parent = pending.pop(0)
             rnode = self._add(node, parent)
-            self._index(parent, rnode, namespaces)
-            if node.ignore:  # indexed so it shadows local-name matches, nothing more
+            if node.ignore:
+                # Indexed only so it shadows local-name matches. A prefix with no
+                # URI cannot match anything, so it needs no namespace either.
+                prefix = node.name.split(":", 1)[0] if ":" in node.name else None
+                if (
+                    prefix is None
+                    or node.name.startswith("{")
+                    or prefix in namespaces
+                    or prefix == "xml"
+                ):
+                    self._index(parent, rnode, namespaces)
                 continue
+            self._index(parent, rnode, namespaces)
             built.append((node, rnode))
             parent.children.append(rnode)
             pending[:0] = [(child, rnode) for child in node.children]
@@ -222,6 +233,16 @@ class Runtime:
                 consumers.setdefault(key, []).append(rnode)
             for proc in node.dataset_processing:
                 self.processes.add(proc.process)
+        # dataset -> elements that can enclose its records (strict ancestors of
+        # any element its values belong to); only these need rule 4 bookkeeping
+        self.enclosing: dict[str, set[int]] = {}
+        for dataset, owners in self.owner_fields.items():
+            ancestors = self.enclosing.setdefault(dataset, set())
+            for owner_id in owners:
+                cur = self.nodes[owner_id].parent
+                while cur is not None and cur.id not in ancestors:
+                    ancestors.add(cur.id)
+                    cur = cur.parent
         for rnode in self.nodes:
             rnode.default_children = [
                 c
@@ -314,11 +335,13 @@ class Record:
         "data",
         "dataset",
         "emitted",
-        "max_depth",
+        "inside",
         "occ",
         "paths",
         "pending",
         "real",
+        "seen",
+        "seq",
     )
 
     def __init__(self, dataset: str, data: dict[str, Any]) -> None:
@@ -328,14 +351,19 @@ class Record:
         self.paths: dict[str, OccPath] = {}  # field -> the element its value is from
         self.pending: dict[str, tuple[ExternalKey, int]] = {}
         self.real = 0  # values written from the document (not inherited)
-        self.max_depth = 0  # depth of the deepest element its values are from
+        # Element occurrences its own values came from or from inside (seen), and
+        # those strictly enclosing them (inside), whose values it shares (rule 4).
+        self.seen: dict[int, int] = {}
+        self.inside: dict[int, int] = {}
+        self.seq = 0  # when it was last written
         self.emitted = False
 
 
 class Frame:
-    __slots__ = ("base", "elem", "flushed", "matched", "node", "occ", "path")
+    __slots__ = ("base", "elem", "flushed", "matched", "node", "occ", "path", "seq")
 
     def __init__(self, node: RNode | None, elem: Any, base: OccPath, occ: int) -> None:
+        self.seq = 0  # the engine's write counter when the element started
         self.node = node
         self.elem = elem
         self.base = base  # path of the parent element
@@ -381,6 +409,10 @@ class Engine:
         self.order: dict[str, None] = {}  # datasets in order of their first record
         self.externals: dict[ExternalKey, tuple[int, Any]] = {}
         self.waiting: dict[ExternalKey, list[tuple[Record, str, int]]] = {}
+        # occurrence -> dataset -> field -> (value, path, as_list, pending): the
+        # latest values belonging to each open element, shared by records inside it
+        self.context: dict[int, dict[str, dict[str, ContextValue]]] = {}
+        self.seq = 0
         self.out: deque[tuple[str, dict[str, Any]]] = deque()
 
     # --- events -------------------------------------------------------------
@@ -414,7 +446,9 @@ class Engine:
         self.next_occ += 1
         occ = self.next_occ
         self.open_occ.add(occ)
-        stack.append(Frame(node, elem, base, occ))
+        frame = Frame(node, elem, base, occ)
+        frame.seq = self.seq
+        stack.append(frame)
         for reset in node.resets:
             self._reset_external((reset.external_dataset, reset.field))
 
@@ -433,10 +467,8 @@ class Engine:
             self._forward(ext, frame.path)
         for proc in node.processing:
             current = self.latest.get(proc.dataset)
-            # Only a record holding values from this element is "its" record.
-            if current is not None and any(
-                occ == frame.occ for path in current.paths.values() for _, occ in path
-            ):
+            # Only a record written to while this element was open is "its" record.
+            if current is not None and current.seq > frame.seq:
                 self.process[proc.process](current.data)
         self._close(frame.occ, node)
 
@@ -560,6 +592,7 @@ class Engine:
 
     def _close(self, occ: int, node: RNode) -> None:
         self.open_occ.discard(occ)
+        self.context.pop(occ, None)
         for key in node.scope_keys:
             stored = self.externals.get(key)
             if stored is not None and stored[0] == occ:
@@ -586,20 +619,14 @@ class Engine:
         return path
 
     def _reachable(self, record: Record, node_id: int, occ: int) -> bool:
-        """Can a value still arriving from occurrence ``occ`` of an enclosing
-        element ``node_id`` reach ``record``? (Rule 4.)
+        """Can a value still arriving from occurrence ``occ`` of element
+        ``node_id`` reach ``record``? (Rule 4.)
 
-        True when the element is still open, the record belongs to that
-        occurrence, and the record holds values from deeper inside it. Holding
-        records back (``_ready``) and copying late values into them
-        (``_write``) both use this, so they cannot disagree.
+        True when the record holds values from strictly inside that occurrence
+        and the element is still open. Holding records back (``_ready``) and
+        sharing late values with them (``_write``) both use this.
         """
-        return (
-            node_id >= 0
-            and occ in self.open_occ
-            and record.occ.get(node_id) == occ
-            and record.max_depth > self.depth[node_id]
-        )
+        return record.inside.get(node_id) == occ and occ in self.open_occ
 
     def _write(
         self,
@@ -612,40 +639,43 @@ class Engine:
         pending: tuple[ExternalKey, int] | None = None,
     ) -> None:
         record = self.latest.get(dataset)
-        if record is not None and path:
+        if path and path[-1][0] in self.rt.enclosing.get(dataset, ()):
+            # Rule 4: this value belongs to an element that can enclose records.
+            # Remember it for records that enter the element later, and share it
+            # with the held records already inside it.
             node_id, occ = path[-1]
-            if record.occ.get(node_id) == occ and (
-                record.max_depth > self.depth[node_id] or len(self.queues[dataset]) > 1
-            ):
-                # A value from an element enclosing earlier records: copy it into
-                # every one it can still reach. They form the tail of the queue.
-                applied = False
-                for held in reversed(self.queues[dataset]):
-                    if held.occ.get(node_id) != occ:
-                        break
-                    if not self._reachable(held, node_id, occ):
-                        continue
-                    if name not in held.paths or (as_list and held.paths[name] == path):
-                        self._set(held, name, value, path, None, pending, as_list)
-                        applied = True
-                if applied:
-                    return
+            shared = self.context.setdefault(occ, {}).setdefault(dataset, {})
+            if as_list and name in shared and shared[name][1] == path:
+                shared[name][0].append(value)
+            else:
+                shared[name] = ([value] if as_list else value, path, as_list, pending)
+            reached_latest = False
+            for held in reversed(self.queues[dataset]) if record is not None else ():
+                if held.seen.get(node_id) != occ:
+                    break  # records touching this occurrence are the queue's tail
+                if self._reachable(held, node_id, occ) and (
+                    name not in held.paths or (as_list and held.paths[name] == path)
+                ):
+                    self._set(held, name, value, path, None, pending, as_list)
+                    reached_latest = reached_latest or held is record
+            if reached_latest:
+                return
         bpath = self._boundary(dataset, path) if dataset in self.rt.explicit else path
         # Occurrence ids are unique per element, so a record that already holds
         # the deepest occurrence of this path also holds all of its ancestors.
         same = (
             bool(bpath)
             and record is not None
-            and (record.occ.get(bpath[-1][0]) == bpath[-1][1])
+            and record.occ.get(bpath[-1][0]) == bpath[-1][1]
         )
         if record is None or (name in record.paths and not as_list):
-            record = self._new_record(dataset, record, path, name)
+            record = self._new_record(dataset)
             same = False
         elif not same:
             occ_map = record.occ
             for node_id, occ in bpath:
                 if occ_map.get(node_id, occ) != occ:
-                    record = self._new_record(dataset, record, path, name)
+                    record = self._new_record(dataset)
                     break
         self._set(record, name, value, path, None if same else bpath, pending, as_list)
 
@@ -661,17 +691,23 @@ class Engine:
     ) -> None:
         """Store a value; ``bpath`` is None when the record already holds it."""
         assert not record.emitted, "a released record received a value"
-        had = name in record.paths
-        record.paths[name] = path
         if bpath:
             occ_map = record.occ
             for node_id, occ in bpath:
                 occ_map[node_id] = occ
-        if path:
-            depth = self.depth[path[-1][0]]
-            if depth > record.max_depth:
-                record.max_depth = depth
+        if path and record.seen.get(path[-1][0]) != path[-1][1]:
+            enclosing = self.rt.enclosing.get(record.dataset, ())
+            for node_id, occ in path:
+                record.seen[node_id] = occ
+            for node_id, occ in path[:-1]:
+                if record.inside.get(node_id) != occ and node_id in enclosing:
+                    record.inside[node_id] = occ
+                    self._inherit(record, occ)
+        had = name in record.paths
+        record.paths[name] = path
         record.real += 1
+        self.seq += 1
+        record.seq = self.seq
         if pending is not None:
             record.pending[name] = pending
             self.waiting.setdefault(pending[0], []).append((record, name, pending[1]))
@@ -684,34 +720,29 @@ class Engine:
         else:
             record.data[name] = value
 
-    def _new_record(
-        self, dataset: str, previous: Record | None, path: OccPath, name: str
-    ) -> Record:
-        record = Record(dataset, dict(self.global_values))
-        if previous is not None:
-            for field, source in previous.paths.items():
-                if (
-                    field == name
-                    or len(source) >= len(path)
-                    or path[: len(source)] != source
-                ):
-                    continue
-                # Inherit values from elements that enclose the new record.
-                record.paths[field] = source
-                bsource = self._boundary(dataset, source)
-                for node_id, occ in bsource:
-                    record.occ[node_id] = occ
-                if source:
-                    record.max_depth = max(record.max_depth, self.depth[source[-1][0]])
-                waiting = previous.pending.get(field)
-                if waiting is not None:
-                    record.pending[field] = waiting
-                    self.waiting[waiting[0]].append((record, field, waiting[1]))
+    def _inherit(self, record: Record, occ: int) -> None:
+        """Give ``record`` the values of enclosing occurrence ``occ`` it lacks."""
+        shared = self.context.get(occ, {}).get(record.dataset)
+        if not shared:
+            return
+        for field, (value, source, as_list, pending) in shared.items():
+            if field in record.paths:
+                continue
+            record.paths[field] = source
+            if pending is not None:
+                stored = self.externals.get(pending[0])
+                if stored is not None and stored[0] == pending[1]:
+                    record.data[field] = stored[1]
                 else:
-                    value = previous.data[field]
-                    record.data[field] = (
-                        list(value) if isinstance(value, list) else value
+                    record.pending[field] = pending
+                    self.waiting.setdefault(pending[0], []).append(
+                        (record, field, pending[1])
                     )
+            else:
+                record.data[field] = list(value) if as_list else value
+
+    def _new_record(self, dataset: str) -> Record:
+        record = Record(dataset, dict(self.global_values))
         self.queues.setdefault(dataset, deque()).append(record)
         self.latest[dataset] = record
         self.order.setdefault(dataset)
@@ -724,7 +755,7 @@ class Engine:
         owners = self.rt.owner_fields.get(record.dataset)
         if owners:
             lists = self.rt.owner_lists.get(record.dataset, {})
-            for node_id, occ in record.occ.items():
+            for node_id, occ in record.inside.items():
                 names = owners.get(node_id)
                 if names is None or not self._reachable(record, node_id, occ):
                     continue

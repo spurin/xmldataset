@@ -318,7 +318,7 @@ Within the dataset title_and_genre, the keyword 'genre' is now changed to 'style
 Example 6 - Optional Dataset Parameters: prefix
 -----------------------------------------------
 
-The prefix declaration assigns a prefix to the assignment name, for example genre with a prefix of shop_information_ will become shop_information_genre
+The prefix declaration assigns a prefix to the assignment name, for example genre with a prefix of ``shop_information_`` will become ``shop_information_genre``
 
 For consistency, in this example, the external information of name uses the additional optional parameter of :<override_name> as mentioned in Example 4 to override the external name
 
@@ -638,7 +638,7 @@ As the title_and_genre is now dispatching 3 datasets, it's final dump is of a si
                                    'title': "Oberon's Legacy"}]}
 
 Example 11 - Using xmldataset as an input to pandas
-------------------------------------------
+---------------------------------------------------
 
 Thanks to keluc for this one, xmldataset works well as an input to pandas with the from_records method
 

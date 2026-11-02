@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 """
 test_xmldataset
 ----------------------------------
@@ -8,16 +5,13 @@ test_xmldataset
 Tests for `xmldataset` module.
 """
 
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+import unittest
 
 from xmldataset import parse_using_profile
 
 
 class TestImports(unittest.TestCase):
-    """ Tests imports """
+    """Tests imports"""
 
     def test_import_parse_using_profile(self):
         try:
@@ -1536,7 +1530,7 @@ class TestCreateObject(unittest.TestCase):
                         publish_date = dataset:1
                         description  = dataset:1"""
 
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
             Exception, "process definition not supplied as argument"
         ):
             parse_using_profile(self.xml, profile)
@@ -1557,7 +1551,7 @@ class TestCreateObject(unittest.TestCase):
         def nullpass():
             pass
 
-        with self.assertRaisesRegexp(Exception, "process coderef to_upper missing"):
+        with self.assertRaisesRegex(Exception, "process coderef to_upper missing"):
             parse_using_profile(self.xml, profile, process={"not_to_upper": nullpass})
 
     def test_dispatch_all(self):
@@ -3417,7 +3411,7 @@ class TestCreateObject(unittest.TestCase):
 
     # def setUp(self):
     def test_xmldataset_object_creation(self):
-        """ doctype comments """
+        """doctype comments"""
         from xmldataset import _XMLDataset
 
         object = _XMLDataset({})

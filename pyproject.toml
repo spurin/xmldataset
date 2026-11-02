@@ -1,0 +1,91 @@
+[build-system]
+requires = ["uv_build>=0.13.6,<0.14"]
+build-backend = "uv_build"
+
+[project]
+name = "xmldataset"
+version = "2.0.0.dev0"
+description = "Extract Python datasets from XML using a simple, indented profile"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+authors = [{ name = "James Spurin", email = "james@spurin.com" }]
+keywords = ["xml", "parsing", "dataset", "extraction", "etl"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Markup :: XML",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/spurin/xmldataset"
+Documentation = "https://xmldataset.readthedocs.io"
+Changelog = "https://github.com/spurin/xmldataset/blob/master/CHANGELOG.md"
+Issues = "https://github.com/spurin/xmldataset/issues"
+
+[dependency-groups]
+dev = [{ include-group = "test" }, { include-group = "lint" }]
+test = ["pytest>=9.2", "hypothesis>=6.170", "coverage>=7.17"]
+lint = ["ruff>=0.17.3", "mypy>=2.4"]
+docs = ["sphinx>=9.2", "myst-parser>=4", "furo>=2025.12.19"]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[tool.uv.dependency-groups]
+# Sphinx 9.2 requires Python 3.13+; the library itself supports 3.11+.
+docs = { requires-python = ">=3.13" }
+
+[tool.uv.build-backend]
+source-include = ["tests/**", "CHANGELOG.md"]
+
+[tool.ruff]
+line-length = 88
+# Legacy print-only scripts; replaced by tested, data-driven examples in 2.0.
+extend-exclude = ["examples"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF", "PT"]
+
+[tool.ruff.lint.per-file-ignores]
+# Style debt in the 1.x engine and its unittest suite, both of which are
+# replaced by the 2.0 rewrite. Remove each entry with the code it covers.
+"src/xmldataset/__init__.py" = ["E501", "SIM102", "SIM118", "SIM401"]
+"tests/test_xmldataset.py" = ["E501", "PT009", "PT027", "E722", "B904", "F401", "F841"]
+
+[tool.mypy]
+strict = true
+files = ["src", "tests"]
+
+[[tool.mypy.overrides]]
+# The 1.x engine and its tests are untyped; new modules are strict from day one.
+module = ["xmldataset", "xmldataset.__main__", "tests.*"]
+ignore_errors = true
+
+[tool.pytest]
+minversion = "9.0"
+testpaths = ["tests"]
+addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
+xfail_strict = true
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+branch = true
+source = ["xmldataset"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 85

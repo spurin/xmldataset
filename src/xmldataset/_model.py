@@ -165,7 +165,7 @@ class Profile:
 
     @classmethod
     def from_yaml(cls, text: str | bytes) -> Profile:
-        """Compile a profile written as YAML. Requires the ``yaml`` extra."""
+        """Compile a profile written as YAML."""
         from ._structured import load_yaml
 
         return cls.from_dict(load_yaml(text))
@@ -196,7 +196,7 @@ class Profile:
         return json.dumps(self.to_dict(), indent=indent, ensure_ascii=False) + "\n"
 
     def to_yaml(self) -> str:
-        """Return the profile as YAML. Requires the ``yaml`` extra."""
+        """Return the profile as YAML."""
         from ._structured import dump_yaml
 
         return dump_yaml(self.to_dict())

@@ -1442,9 +1442,7 @@ wheels = [
 name = "xmldataset"
 version = "2.0.0"
 source = { editable = "." }
-
-[package.optional-dependencies]
-yaml = [
+dependencies = [
     { name = "pyyaml" },
 ]
 
@@ -1455,7 +1453,6 @@ dev = [
     { name = "jsonschema" },
     { name = "mypy" },
     { name = "pytest" },
-    { name = "pyyaml" },
     { name = "ruff" },
     { name = "types-jsonschema" },
     { name = "types-pyyaml" },
@@ -1463,7 +1460,6 @@ dev = [
 docs = [
     { name = "furo", marker = "python_full_version >= '3.13'" },
     { name = "myst-parser", marker = "python_full_version >= '3.13'" },
-    { name = "pyyaml", marker = "python_full_version >= '3.13'" },
     { name = "sphinx", marker = "python_full_version >= '3.13'" },
     { name = "sphinx-design", marker = "python_full_version >= '3.13'" },
 ]
@@ -1478,15 +1474,13 @@ test = [
     { name = "hypothesis" },
     { name = "jsonschema" },
     { name = "pytest" },
-    { name = "pyyaml" },
 ]
 
 [package.group-requires-python]
 docs = ">=3.13"
 
 [package.metadata]
-requires-dist = [{ name = "pyyaml", marker = "extra == 'yaml'", specifier = ">=6.0.2" }]
-provides-extras = ["yaml"]
+requires-dist = [{ name = "pyyaml", specifier = ">=6.0.2" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1495,7 +1489,6 @@ dev = [
     { name = "jsonschema", specifier = ">=4.25" },
     { name = "mypy", specifier = ">=2.4" },
     { name = "pytest", specifier = ">=9.2" },
-    { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "ruff", specifier = ">=0.17.3" },
     { name = "types-jsonschema", specifier = ">=4.25" },
     { name = "types-pyyaml", specifier = ">=6.0.12" },
@@ -1503,7 +1496,6 @@ dev = [
 docs = [
     { name = "furo", marker = "python_full_version >= '3.13'", specifier = ">=2025.12.19" },
     { name = "myst-parser", marker = "python_full_version >= '3.13'", specifier = ">=4" },
-    { name = "pyyaml", marker = "python_full_version >= '3.13'", specifier = ">=6.0.2" },
     { name = "sphinx", marker = "python_full_version >= '3.13'", specifier = ">=9.2" },
     { name = "sphinx-design", marker = "python_full_version >= '3.13'", specifier = ">=0.7" },
 ]
@@ -1518,5 +1510,4 @@ test = [
     { name = "hypothesis", specifier = ">=6.170" },
     { name = "jsonschema", specifier = ">=4.25" },
     { name = "pytest", specifier = ">=9.2" },
-    { name = "pyyaml", specifier = ">=6.0.2" },
 ]

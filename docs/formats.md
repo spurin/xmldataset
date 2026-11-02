@@ -9,7 +9,6 @@ convert between them at any time.
 | Best for | Writing by hand; the most compact | Teams that already use YAML for configuration | Profiles generated or stored by other programs |
 | Comments | `#` lines | `#` lines | No |
 | Editor completion | No | Yes, with the JSON Schema | Yes, with the JSON Schema |
-| Extra install | None | `pip install "xmldataset[yaml]"` | None |
 | File extension | anything else, e.g. `.txt` | `.yaml` or `.yml` | `.json` |
 
 Here is the same profile in each format:

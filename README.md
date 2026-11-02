@@ -23,11 +23,11 @@ equivalent, and you can convert between them at any time.
 ## Installation
 
 ```console
-pip install xmldataset            # text and JSON profiles
-pip install "xmldataset[yaml]"    # adds YAML profiles
+pip install xmldataset
 ```
 
-xmldataset requires Python 3.11 or newer and has no other dependencies.
+xmldataset requires Python 3.11 or newer. Its only dependency is
+[PyYAML](https://pypi.org/project/PyYAML/), for YAML profiles.
 
 ## Example
 
@@ -114,7 +114,7 @@ xmldataset convert profile.txt --to yaml
   or a file, and hands over each record as soon as it is complete.
 - **Namespaces**, matched by local name or by prefix.
 - **A command-line tool** to run, convert and validate profiles.
-- **Typed, with no dependencies**; YAML support is an optional extra.
+- **Typed**, with PyYAML as the only dependency.
 
 ## Contributing
 

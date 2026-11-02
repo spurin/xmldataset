@@ -50,7 +50,6 @@ NODE_KEYS = (
     "$reset_external_values",
     "$dataset_processing",
 )
-YAML_HINT = "reading YAML profiles needs PyYAML: pip install 'xmldataset[yaml]'"
 
 
 def _err(message: str, loc: str) -> ProfileError:
@@ -340,10 +339,8 @@ def profile_to_dict(profile: Profile) -> dict[str, Any]:
 
 
 def load_yaml(text: str | bytes) -> Any:
-    try:
-        import yaml
-    except ImportError:
-        raise ImportError(YAML_HINT) from None
+    import yaml  # imported on first use to keep `import xmldataset` fast
+
     try:
         return yaml.safe_load(text)
     except yaml.YAMLError as exc:
@@ -354,10 +351,8 @@ def load_yaml(text: str | bytes) -> Any:
 
 
 def dump_yaml(data: Mapping[str, Any]) -> str:
-    try:
-        import yaml
-    except ImportError:
-        raise ImportError(YAML_HINT) from None
+    import yaml
+
     text: str = yaml.safe_dump(dict(data), sort_keys=False, allow_unicode=True)
     return text
 
@@ -365,7 +360,7 @@ def dump_yaml(data: Mapping[str, Any]) -> str:
 def load_profile(path: str | PathLike[str]) -> Profile:
     """Load a profile from a file, choosing the format from its extension.
 
-    ``.yaml``/``.yml`` files are read as YAML (needs the ``yaml`` extra),
+    ``.yaml``/``.yml`` files are read as YAML,
     ``.json`` files as JSON, and anything else as the indented text syntax.
 
     Raises:

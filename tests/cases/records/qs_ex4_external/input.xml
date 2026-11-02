@@ -1,0 +1,5 @@
+<catalog>
+<shop number="1"><book id="bk101"><author>Gambardella</author><title>XML Guide</title><genre>Computer</genre></book>
+<book id="bk102"><author>Ralls</author><title>Midnight Rain</title><genre>Fantasy</genre></book></shop>
+<shop number="2"><book id="bk103"><author>Corets</author><title>Maeve</title><genre>Fantasy</genre></book>
+<book id="bk104"><author>Corets</author><title>Oberon</title><genre>Fantasy</genre></book></shop></catalog>

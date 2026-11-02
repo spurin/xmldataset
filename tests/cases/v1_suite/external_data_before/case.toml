@@ -1,0 +1,2 @@
+description = "Ported from the 1.x unittest test_external_data_before."
+input = "../../_fixtures/catalog.xml"

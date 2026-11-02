@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://xmldataset.readthedocs.io/en/stable/schema/profile-v1.json",
+  "title": "xmldataset profile",
+  "description": "A YAML or JSON profile for xmldataset. Keys are element or attribute names; keys starting with $ are settings for the element they appear in.",
+  "type": "object",
+  "properties": {
+    "$schema": { "type": "string" }
+  },
+  "patternProperties": {
+    "^[^$#\\s={}][^\\s={}]*$|^\\{[^{}\\s]*\\}[^\\s={}]+$": { "$ref": "#/$defs/node" }
+  },
+  "additionalProperties": false,
+  "minProperties": 1,
+  "$defs": {
+    "datasetName": {
+      "description": "A dataset name: no spaces. Unquoted YAML integers are accepted.",
+      "type": ["string", "integer"],
+      "pattern": "^\\S+$"
+    },
+    "text": {
+      "type": ["string", "integer"]
+    },
+    "names": {
+      "anyOf": [
+        { "$ref": "#/$defs/datasetName" },
+        { "type": "array", "items": { "$ref": "#/$defs/datasetName" }, "minItems": 1 }
+      ]
+    },
+    "field": {
+      "description": "Where a captured value goes.",
+      "type": "object",
+      "properties": {
+        "dataset": { "$ref": "#/$defs/datasetName", "description": "Dataset that receives the value." },
+        "external_dataset": { "$ref": "#/$defs/datasetName", "description": "External dataset that holds the value for $external_values." },
+        "name": { "$ref": "#/$defs/text", "description": "Output field name (default: the element or attribute name)." },
+        "prefix": { "$ref": "#/$defs/text", "description": "Text prepended to the output field name." },
+        "process": { "$ref": "#/$defs/text", "description": "Name of a function passed with the process option." },
+        "default": { "$ref": "#/$defs/text", "description": "Value used when the element or attribute is missing." },
+        "list": { "type": "boolean", "description": "Collect repeated values into a list." }
+      },
+      "additionalProperties": false,
+      "anyOf": [{ "required": ["dataset"] }, { "required": ["external_dataset"] }]
+    },
+    "fieldItem": {
+      "anyOf": [{ "$ref": "#/$defs/datasetName" }, { "$ref": "#/$defs/field" }]
+    },
+    "node": {
+      "description": "An element or attribute: a dataset name, a list of fields, or a mapping of settings and children.",
+      "anyOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/datasetName" },
+        { "type": "array", "items": { "$ref": "#/$defs/fieldItem" }, "minItems": 1 },
+        { "$ref": "#/$defs/element" }
+      ]
+    },
+    "element": {
+      "type": "object",
+      "properties": {
+        "$dataset": { "$ref": "#/$defs/datasetName" },
+        "$external_dataset": { "$ref": "#/$defs/datasetName" },
+        "$name": { "$ref": "#/$defs/text" },
+        "$prefix": { "$ref": "#/$defs/text" },
+        "$process": { "$ref": "#/$defs/text" },
+        "$default": { "$ref": "#/$defs/text" },
+        "$list": { "type": "boolean" },
+        "$fields": { "type": "array", "items": { "$ref": "#/$defs/fieldItem" }, "minItems": 1 },
+        "$ignore": { "type": "boolean", "description": "Skip this element and everything inside it." },
+        "$new_dataset": { "$ref": "#/$defs/names", "description": "Datasets whose records start at this element." },
+        "$always_follow": { "$ref": "#/$defs/names", "description": "Children whose defaults apply even when the child is missing." },
+        "$external_values": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "external_dataset": { "$ref": "#/$defs/datasetName" },
+              "field": { "$ref": "#/$defs/datasetName" },
+              "dataset": { "$ref": "#/$defs/datasetName" },
+              "name": { "$ref": "#/$defs/datasetName" }
+            },
+            "required": ["external_dataset", "field", "dataset"],
+            "additionalProperties": false
+          }
+        },
+        "$reset_external_values": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "external_dataset": { "$ref": "#/$defs/datasetName" },
+              "field": { "$ref": "#/$defs/datasetName" }
+            },
+            "required": ["external_dataset", "field"],
+            "additionalProperties": false
+          }
+        },
+        "$dataset_processing": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "process": { "$ref": "#/$defs/datasetName" },
+              "dataset": { "$ref": "#/$defs/datasetName" }
+            },
+            "required": ["process", "dataset"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "patternProperties": {
+        "^[^$#\\s={}][^\\s={}]*$|^\\{[^{}\\s]*\\}[^\\s={}]+$": { "$ref": "#/$defs/node" }
+      },
+      "additionalProperties": false,
+      "dependentSchemas": {
+        "$name": { "anyOf": [{ "required": ["$dataset"] }, { "required": ["$external_dataset"] }] },
+        "$prefix": { "anyOf": [{ "required": ["$dataset"] }, { "required": ["$external_dataset"] }] },
+        "$process": { "anyOf": [{ "required": ["$dataset"] }, { "required": ["$external_dataset"] }] },
+        "$default": { "anyOf": [{ "required": ["$dataset"] }, { "required": ["$external_dataset"] }] },
+        "$list": { "anyOf": [{ "required": ["$dataset"] }, { "required": ["$external_dataset"] }] }
+      }
+    }
+  }
+}

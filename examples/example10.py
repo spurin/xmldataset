@@ -1,5 +1,6 @@
-import xmldataset
 import pprint
+
+import xmldataset
 
 # Setup Pretty Printing
 ppsetup = pprint.PrettyPrinter(indent=4)
@@ -53,7 +54,7 @@ xml = """<?xml version="1.0"?>
      </shop>
   </catalog>"""
 
-profile="""
+profile = """
 catalog
     shop
         number     = external_dataset:shop_information
@@ -65,17 +66,17 @@ catalog
             genre  = dataset:title_and_genre,name:style
             __EXTERNAL_VALUE__ = shop_information:number:title_and_author shop_information:number:title_and_genre"""
 
+
 def print_dataset(value):
     pp(value)
 
+
 # Pretty Print the output
-output = xmldataset.parse_using_profile(xml,profile, dispatch = { 
-        'title_and_author' : { 
-                'counter' : 2, 
-                'coderef' : print_dataset 
-        }, 
-        'title_and_genre' : { 
-                'counter' : 3, 
-                'coderef' : print_dataset 
-        } 
-})
+output = xmldataset.parse_using_profile(
+    xml,
+    profile,
+    dispatch={
+        "title_and_author": {"counter": 2, "coderef": print_dataset},
+        "title_and_genre": {"counter": 3, "coderef": print_dataset},
+    },
+)

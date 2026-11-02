@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+        <colleagues>
+            <colleague title="The Boss">John Smith</colleague>
+            <colleague title="Admin Assistant">Jane Doe</colleague>
+            <colleague title="Minion">Anne Other</colleague>
+        </colleagues>

@@ -1,0 +1,4 @@
+description = "Record-boundary study case 'implicit_global_values'."
+
+[options]
+global_values = { src = "g" }

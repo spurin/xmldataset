@@ -1,0 +1,16 @@
+{
+  "employees": [
+    {
+      "title": "The Boss",
+      "colleague": "John Smith"
+    },
+    {
+      "title": "Admin Assistant",
+      "colleague": "Jane Doe"
+    },
+    {
+      "title": "Minion",
+      "colleague": "Anne Other"
+    }
+  ]
+}

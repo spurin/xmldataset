@@ -1,0 +1,1 @@
+description = "Record-boundary study case 'external_stale' — an external value is scoped to its shop, so shop 2 does not inherit shop 1's number."

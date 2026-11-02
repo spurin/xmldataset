@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "xmldataset"
-version = "2.0.0.dev0"
+version = "2.0.0"
 description = "Extract Python datasets from XML using a simple, indented profile"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -26,8 +26,15 @@ classifiers = [
     "Programming Language :: Python :: 3.15",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Text Processing :: Markup :: XML",
+    "Typing :: Typed",
 ]
 dependencies = []
+
+[project.optional-dependencies]
+yaml = ["pyyaml>=6.0.2"]
+
+[project.scripts]
+xmldataset = "xmldataset._cli:main"
 
 [project.urls]
 Homepage = "https://github.com/spurin/xmldataset"
@@ -37,9 +44,21 @@ Issues = "https://github.com/spurin/xmldataset/issues"
 
 [dependency-groups]
 dev = [{ include-group = "test" }, { include-group = "lint" }]
-test = ["pytest>=9.2", "hypothesis>=6.170", "coverage>=7.17"]
-lint = ["ruff>=0.17.3", "mypy>=2.4"]
-docs = ["sphinx>=9.2", "myst-parser>=4", "furo>=2025.12.19"]
+test = [
+    "pytest>=9.2",
+    "hypothesis>=6.170",
+    "coverage>=7.17",
+    "pyyaml>=6.0.2",
+    "jsonschema>=4.25",
+]
+lint = ["ruff>=0.17.3", "mypy>=2.4", "types-pyyaml>=6.0.12", "types-jsonschema>=4.25"]
+docs = [
+    "sphinx>=9.2",
+    "myst-parser>=4",
+    "furo>=2025.12.19",
+    "sphinx-design>=0.7",
+    "pyyaml>=6.0.2",
+]
 
 [tool.uv]
 default-groups = ["dev"]
@@ -53,26 +72,25 @@ source-include = ["tests/**", "CHANGELOG.md"]
 
 [tool.ruff]
 line-length = 88
-# Legacy print-only scripts; replaced by tested, data-driven examples in 2.0.
-extend-exclude = ["examples"]
+# The frozen 1.0.4 engine is a test oracle and stays byte-for-byte as released.
+extend-exclude = ["tests/legacy"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF", "PT"]
 
 [tool.ruff.lint.per-file-ignores]
-# Style debt in the 1.x engine and its unittest suite, both of which are
-# replaced by the 2.0 rewrite. Remove each entry with the code it covers.
-"src/xmldataset/__init__.py" = ["E501", "SIM102", "SIM118", "SIM401"]
-"tests/test_xmldataset.py" = ["E501", "PT009", "PT027", "E722", "B904", "F401", "F841"]
+# XML and profile literals in tests read better unwrapped.
+"tests/**" = ["E501"]
+
 
 [tool.mypy]
 strict = true
 files = ["src", "tests"]
+exclude = ["^tests/legacy/"]
 
 [[tool.mypy.overrides]]
-# The 1.x engine and its tests are untyped; new modules are strict from day one.
-module = ["xmldataset", "xmldataset.__main__", "tests.*"]
-ignore_errors = true
+module = ["tests.legacy.*"]
+follow_imports = "skip"
 
 [tool.pytest]
 minversion = "9.0"

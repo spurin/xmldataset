@@ -1,5 +1,6 @@
-import xmldataset
 import pprint
+
+import xmldataset
 
 # Setup Pretty Printing
 ppsetup = pprint.PrettyPrinter(indent=4)
@@ -53,10 +54,12 @@ xml = """<?xml version="1.0"?>
      </shop>
   </catalog>"""
 
+
 def to_upper(value):
     return value.upper()
 
-profile="""
+
+profile = """
 catalog
     shop
         number     = external_dataset:shop_information
@@ -68,5 +71,5 @@ catalog
             __EXTERNAL_VALUE__ = shop_information:number:title_and_author shop_information:number:title_and_genre"""
 
 # Pretty Print the output
-output = xmldataset.parse_using_profile(xml,profile, process = { 'to_upper' : to_upper })
+output = xmldataset.parse_using_profile(xml, profile, process={"to_upper": to_upper})
 pp(output)

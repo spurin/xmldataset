@@ -28,10 +28,7 @@ classifiers = [
     "Topic :: Text Processing :: Markup :: XML",
     "Typing :: Typed",
 ]
-dependencies = []
-
-[project.optional-dependencies]
-yaml = ["pyyaml>=6.0.2"]
+dependencies = ["pyyaml>=6.0.2"]
 
 [project.scripts]
 xmldataset = "xmldataset._cli:main"
@@ -48,7 +45,6 @@ test = [
     "pytest>=9.2",
     "hypothesis>=6.170",
     "coverage>=7.17",
-    "pyyaml>=6.0.2",
     "jsonschema>=4.25",
 ]
 lint = ["ruff>=0.17.3", "mypy>=2.4", "types-pyyaml>=6.0.12", "types-jsonschema>=4.25"]
@@ -57,7 +53,6 @@ docs = [
     "myst-parser>=4",
     "furo>=2025.12.19",
     "sphinx-design>=0.7",
-    "pyyaml>=6.0.2",
 ]
 
 [tool.uv]

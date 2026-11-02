@@ -1,20 +1,14 @@
 # Installation
 
-xmldataset needs Python 3.11 or newer and has no required dependencies.
+xmldataset needs Python 3.11 or newer.
 
 ```console
 pip install xmldataset
 ```
 
-To read profiles written in YAML, install the `yaml` extra, which adds
-[PyYAML](https://pypi.org/project/PyYAML/):
-
-```console
-pip install "xmldataset[yaml]"
-```
-
-Text and JSON profiles need nothing extra. With [uv](https://docs.astral.sh/uv/),
-use `uv add xmldataset` or `uv add "xmldataset[yaml]"`.
+or, with [uv](https://docs.astral.sh/uv/), `uv add xmldataset`. Text, YAML and
+JSON profiles all work out of the box; the only dependency is
+[PyYAML](https://pypi.org/project/PyYAML/).
 
 Installing the package also installs the [`xmldataset` command](cli.md).
 

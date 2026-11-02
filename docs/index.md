@@ -54,7 +54,7 @@ The Minion has no email address, so their record has no `email` field.
 - **Namespaces**, matched by local name or by prefix.
 - **A command-line tool** to run profiles (JSON, JSON Lines or CSV output),
   convert them between formats, and validate them.
-- **Typed, no dependencies.** YAML support is an optional extra.
+- **Typed**, with PyYAML as the only dependency.
 
 ```{toctree}
 :hidden:

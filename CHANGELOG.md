@@ -16,6 +16,7 @@ for every change, with before and after examples.
 
 - YAML and JSON profiles, equivalent to the text syntax, with a JSON Schema for
   editor completion (`xmldataset.json_schema()`, published on the docs site).
+  PyYAML is now a dependency, so YAML works without any extra install.
 - `iter_records()`: stream `(dataset, record)` pairs as each record completes.
 - `compile_profile()`, `load_profile()` and the `Profile` model, which converts
   between formats with `to_dsl()`, `to_yaml()`, `to_json()` and `to_dict()`.

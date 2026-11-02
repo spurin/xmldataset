@@ -89,14 +89,15 @@ Contents
 
    installation
    quickstart
+   api
    contributing
    authors
-   history
+   changelog
 
 Contributors
 ============
 
-``xmldataset`` is written and maintained by `James Spurin <https://github.com/james.spurin>`_,  The module stands on the shoulders of giants with it's use of ElementTree and cElementTree as the core XML parser.
+``xmldataset`` is written and maintained by `James Spurin <https://github.com/spurin>`_. The module stands on the shoulders of giants with its use of ElementTree as the core XML parser.
 
 Thanks go to the following for their feedback and improvements:
 

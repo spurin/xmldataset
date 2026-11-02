@@ -1,20 +1,20 @@
-""" Extracts XML into Python Datasets based upon a simple text profile markup language """
+"""Extracts XML into Python Datasets based upon a simple text profile markup language"""
 
-# -*- coding: utf-8 -*-
 # pylint: disable=line-too-long
+
+import importlib.metadata
+import logging
+import re
+import xml.etree.ElementTree as ET
 
 __author__ = "James Spurin"
 __email__ = "james@spurin.com"
-__version__ = "1.0.1"
 
-import re
-import logging
-
-# Attempt to use cElementTree, otherwise fall back on ElementTree
 try:
-    import xml.etree.cElementTree as ET
-except ImportError:
-    import xml.etree.ElementTree as ET
+    __version__ = importlib.metadata.version("xmldataset")
+except importlib.metadata.PackageNotFoundError:  # source tree, not installed
+    __version__ = "0+unknown"
+
 
 # class _XMLDataset
 class _XMLDataset:  # pylint: disable=R0902,R0903
@@ -62,13 +62,12 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
 
         # Process each token
         for token in tokens:
-
             # Declare holders for the length_indentation and token_data
             length_indentation = None
             token_data = None
 
             # Attempt to match token with indentation
-            match = re.search("(\s+)(.*)", token)  # pylint: disable=W1401
+            match = re.search(r"(\s+)(.*)", token)
 
             # If a match is found capture the indentation and the token_data
             if match:
@@ -82,7 +81,6 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
 
             # If token data is available
             if token_data:
-
                 # Store the previous_indentation information
                 previous_indentation = indentation_history[-1]
 
@@ -92,7 +90,6 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
 
                 # Otherwise if the indentation has decreased
                 elif previous_indentation > length_indentation:
-
                     # Step back through the indentation
                     while previous_indentation > length_indentation:
                         indentation_history.pop()
@@ -104,7 +101,6 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
 
                 # If the token contains a value ( signified by an = sign )
                 if "=" in token_data:
-
                     # Capture the key and the record_holder
                     key, record_holder = token_data.split("=")
 
@@ -114,7 +110,6 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
 
                     # Check for an Ignore marker
                     if record_holder == "__IGNORE__":
-
                         if key not in current_profile_position:
                             current_profile_position[key] = {}
 
@@ -122,21 +117,20 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
 
                     # Otherwise continue
                     else:
-
                         # Split unprocessed records
                         records_unprocessed = record_holder.split(" ")
 
                         # Capture New Dataset markers where available
                         if key == "__NEW_DATASET__":
-                            current_profile_position[
-                                "__NEW_DATASET__"
-                            ] = records_unprocessed
+                            current_profile_position["__NEW_DATASET__"] = (
+                                records_unprocessed
+                            )
 
                         # Otherwise Capture External Values where available
                         elif key == "__EXTERNAL_VALUE__":
-                            current_profile_position[
-                                "__EXTERNAL_VALUE__"
-                            ] = records_unprocessed
+                            current_profile_position["__EXTERNAL_VALUE__"] = (
+                                records_unprocessed
+                            )
 
                         # Otherwise Capture New External Values where available
                         elif key == "__NEW_EXTERNAL_VALUE_HOLDER__":
@@ -146,19 +140,18 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
 
                         # Otherwise Capture Processing markers where available
                         elif key == "__DATASET_PROCESSING__":
-                            current_profile_position[
-                                "__DATASET_PROCESSING__"
-                            ] = records_unprocessed
+                            current_profile_position["__DATASET_PROCESSING__"] = (
+                                records_unprocessed
+                            )
 
                         # Otherwise Capture Always Follow markers where available
                         elif key == "__ALWAYS_FOLLOW__":
-                            current_profile_position[
-                                "__ALWAYS_FOLLOW__"
-                            ] = records_unprocessed
+                            current_profile_position["__ALWAYS_FOLLOW__"] = (
+                                records_unprocessed
+                            )
 
                         # Otherwise ....
                         else:
-
                             # Add an order processing sequence to the profile, create where necessary
                             # or append
                             if "__order__" not in current_profile_position:
@@ -169,7 +162,6 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
 
                             # Process records_unprocessed
                             for record_unprocessed in records_unprocessed:
-
                                 # Add the key
                                 if key not in current_profile_position:
                                     current_profile_position[key] = {}
@@ -191,7 +183,6 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
 
                 # If the token does not contain an = sign
                 else:
-
                     # Create a named dictionary
                     holder = {}
 
@@ -225,10 +216,6 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
 
         # If a process handler has been specified call accordingly
         if "process" in record:
-
-            # Capture the coderef from the object
-            coderef = None
-
             if hasattr(self, "process"):
                 if record["process"] in self.process:
                     value = self.process[record["process"]](value)
@@ -239,14 +226,12 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
 
         # If the record contains a dataset
         if "dataset" in record:
-
             # Check if the current dataset doesn't exist or if the key in question already exists
             # If so, create a new data_structure holder
             if (
-                not record["dataset"] in self.data_structure
+                record["dataset"] not in self.data_structure
                 or name in self.data_structure[record["dataset"]][-1]
             ):
-
                 # Dispatch existing data
                 self._dispatch_dataset(record["dataset"])
 
@@ -268,7 +253,6 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
 
         # If the record contains an external_dataset
         if "external_dataset" in record:
-
             # If the external dataset doesn't exist in the data structure add accordingly
             if record["external_dataset"] not in self.external_data:
                 self.external_data[record["external_dataset"]] = {}
@@ -309,7 +293,6 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
 
         # If the object contains dispatch logic
         if hasattr(self, "dispatch"):
-
             # Check for dataset specific dispatch
             if dataset in self.dispatch:
                 if "counter" in self.dispatch[dataset]:
@@ -333,7 +316,6 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
             # If we have enough records, dispatch accordingly
             if dataset in self.data_structure:
                 if len(self.data_structure[dataset]) >= counter_trigger or flush:
-
                     # Call the coderef with the payload, send as dict with dataset value
                     counter_coderef({dataset: self.data_structure[dataset]})
 
@@ -344,7 +326,7 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
         """Process data"""
 
         def process_element():
-            """ Process Elements """
+            """Process Elements"""
 
             # Store the previous element if applicable
             self._previous_key = (
@@ -360,7 +342,6 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
 
             # Check if the key is in the profile
             if self._current_key in self._profile:
-
                 # Store the old profile
                 self._profiles.append(self._profile)
 
@@ -369,15 +350,13 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
 
                 # Skip if __IGNORE__
                 if "__IGNORE__" in self._profile:
-                    next
+                    pass
 
                 # Otherwise continue
                 else:
-
                     # If an external value has been specified
                     if "__NEW_EXTERNAL_VALUE_HOLDER__" in self._profile:
                         for dataset in self._profile["__NEW_EXTERNAL_VALUE_HOLDER__"]:
-
                             # Holder for __EXTERNAL_REFERENCES__
                             values = dataset.split(":")
                             ext_dataset = values[0]
@@ -392,7 +371,6 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
                     # If a new dataset has been specified
                     if "__NEW_DATASET__" in self._profile:
                         for dataset in self._profile["__NEW_DATASET__"]:
-
                             # Dispatch existing datasets
                             self._dispatch_dataset(dataset)
 
@@ -404,7 +382,6 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
 
                     # Process records where available, i.e. found in the same layer
                     if "__record__" in self._profile:
-
                         # Process each record
                         for record in self._profile["__record__"]:
                             self._process_record(record, xml_root.tag, xml_root.text)
@@ -412,7 +389,6 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
                     # Walk path based on order
                     if "__order__" in self._profile:
                         for order_value in self._profile["__order__"]:
-
                             # Match Marker
                             match = 0
 
@@ -423,7 +399,6 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
                                 # If the attribute has a profile entry, process each record
                                 if order_value in self._profile:
                                     if "__record__" in self._profile[order_value]:
-
                                         # Process each record
                                         for record in self._profile[order_value][
                                             "__record__"
@@ -501,7 +476,6 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
                     # If an external value has been specified
                     if "__EXTERNAL_VALUE__" in self._profile:
                         for dataset in self._profile["__EXTERNAL_VALUE__"]:
-
                             # Holder for __EXTERNAL_REFERENCES__
                             values = dataset.split(":")
                             ext_dataset = values[0]
@@ -517,7 +491,6 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
                             elif (
                                 forward_name in self.data_structure[forward_dataset][-1]
                             ):
-
                                 # Dispatch dataset where applicable
                                 self._dispatch_dataset(forward_dataset)
 
@@ -544,7 +517,6 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
                     # this is processed last
                     if "__DATASET_PROCESSING__" in self._profile:
                         for process_entry in self._profile["__DATASET_PROCESSING__"]:
-
                             # Holder for __DATASET_PROCESSING__
                             values = process_entry.split(":")
                             process = values[0]
@@ -552,7 +524,6 @@ class _XMLDataset:  # pylint: disable=R0902,R0903
 
                             if hasattr(self, "process"):
                                 if process in self.process:
-
                                     # Inline processing of the dataset_list
                                     self.process[process](
                                         self.data_structure[dataset][-1]

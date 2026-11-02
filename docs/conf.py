@@ -1,46 +1,28 @@
-from os.path import join
-from datetime import datetime
+"""Sphinx configuration for the xmldataset documentation."""
 
-import sys
-import os
+from datetime import date
+from importlib.metadata import version as package_version
 
-# Alabaster theme + mini-extension
-sys.path.append(os.path.abspath('_themes'))
-html_theme_path = ['_themes']
-extensions = ['alabaster']
+project = "xmldataset"
+author = "James Spurin"
+copyright = f"2014-{date.today().year}, {author}"
+release = package_version("xmldataset")
+version = ".".join(release.split(".")[:2])
 
-# Paths relative to invoking conf.py - not this shared file
-html_static_path = ['_shared_static']
-html_theme = 'alabaster'
+extensions = [
+    "myst_parser",
+    "sphinx.ext.autodoc",
+]
+source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
+root_doc = "index"
+exclude_patterns = ["_build"]
+
+html_theme = "furo"
+html_title = "xmldataset"
+html_logo = "_shared_static/logo.jpg"
+html_static_path = ["_shared_static"]
 html_theme_options = {
-    'logo': 'logo.jpg',
-    'logo_name': True,
-    'logo_text_align': 'center',
-    'description': "Simplifying the process of extracting data from XML, so you can get on with more useful stuff",
-    'github_user': 'spurin',
-    'github_repo': 'xmldataset',
-    'github_type': 'star',
-    'github_banner': True,
-    'travis_button': True,
-
-    'link': '#3782BE',
-    'link_hover': '#3782BE',
+    "source_repository": "https://github.com/spurin/xmldataset/",
+    "source_branch": "master",
+    "source_directory": "docs/",
 }
-html_sidebars = {
-    '**': [
-        'about.html',
-        'navigation.html',
-        'searchbox.html',
-        'donate.html',
-    ]
-}
-
-# Regular settings
-project = 'xmldataset'
-year = datetime.now().year
-copyright = '%d James Spurin' % year
-master_doc = 'index'
-templates_path = ['_templates']
-exclude_trees = ['_build']
-source_suffix = '.rst'
-default_role = 'obj'

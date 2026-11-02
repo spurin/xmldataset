@@ -1,4 +1,5 @@
-"""Every ```pycon block in the docs and README runs as a doctest.
+"""Every ```pycon block in the docs and README runs as a doctest, and the
+README example runs as shown.
 
 Blocks on one page share their variables, in page order. (Profile examples in
 the docs are rendered from examples/ and checked by test_cases.py.)
@@ -7,6 +8,7 @@ the docs are rendered from examples/ and checked by test_cases.py.)
 from __future__ import annotations
 
 import doctest
+import json
 import re
 from pathlib import Path
 
@@ -15,6 +17,7 @@ import pytest
 ROOT = Path(__file__).parent.parent
 PAGES = [ROOT / "README.md", *sorted((ROOT / "docs").glob("*.md"))]
 BLOCK = re.compile(r"^```pycon\n(.*?)^```", re.MULTILINE | re.DOTALL)
+FENCE = re.compile(r"^```(\w+)\n(.*?)^```", re.MULTILINE | re.DOTALL)
 
 
 @pytest.mark.parametrize("page", PAGES, ids=lambda p: p.name)
@@ -32,13 +35,31 @@ def test_pycon_examples(page: Path) -> None:
     assert runner.failures == 0, f"{runner.failures} example(s) failed in {page.name}"
 
 
-def test_readme_yaml_and_json_match_the_converter() -> None:
+def test_readme_example() -> None:
+    """The README example runs as shown, with the profile in each format."""
     import xmldataset
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    profile = xmldataset.compile_profile(
-        "colleagues\n    colleague\n        title = dataset:colleagues\n"
-        "        email = dataset:colleagues,default:none\n"
-    )
-    assert profile.to_yaml().strip() in readme
-    assert profile.to_json().strip() in readme
+    example = readme.split("## Example\n", 1)[1].split("\n## ", 1)[0]
+    blocks: dict[str, list[str]] = {}
+    for lang, body in FENCE.findall(example):
+        blocks.setdefault(lang, []).append(body)
+    [xml] = blocks["xml"]
+    [text] = blocks["text"]
+    [yaml] = blocks["yaml"]
+    [json_profile, output] = blocks["json"]
+    code = blocks["python"][0]
+
+    profile = xmldataset.compile_profile(text)
+    assert profile.to_yaml().strip() == yaml.strip()
+    assert profile.to_json().strip() == json_profile.strip()
+
+    expected = json.dumps(json.loads(output))  # key order matters
+    namespace: dict[str, object] = {"xml": xml, "profile": text}
+    exec(code, namespace)
+    assert json.dumps(namespace["result"]) == expected
+    for form in (
+        xmldataset.Profile.from_yaml(yaml),
+        xmldataset.Profile.from_json(json_profile),
+    ):
+        assert json.dumps(xmldataset.parse_using_profile(xml, form)) == expected

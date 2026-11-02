@@ -5,7 +5,7 @@ For every example this writes, under docs/_generated/examples/<name>/:
 - ``profile.md``: the profile as synchronised Text | YAML | JSON tabs. YAML and
   JSON are generated from profile.dsl with xmldataset's own converter.
 - ``input.md``: the XML input.
-- ``output.md``: the output (expected.json).
+- ``output.md``: the output, as the engine produces it (equal to expected.json).
 
 Before writing anything, each example is run with all three profile formats and
 must produce expected.json exactly; otherwise the build fails. It also copies
@@ -53,6 +53,7 @@ def _render(example: Path, out: Path) -> None:
     profile = xmldataset.compile_profile(text)
     yaml_text, json_text = profile.to_yaml(), profile.to_json()
     options = _options(meta)
+    shown: Any = None
     for label, form in [
         ("text", text),
         ("YAML", xmldataset.Profile.from_yaml(yaml_text)),
@@ -64,6 +65,8 @@ def _render(example: Path, out: Path) -> None:
                 f"example {example.name}: the {label} profile produced {got!r},"
                 f" but expected.json says {expected!r}"
             )
+        if shown is None:
+            shown = got  # show the output exactly as the engine produces it
 
     out.mkdir(parents=True, exist_ok=True)
     tabs = [
@@ -77,7 +80,7 @@ def _render(example: Path, out: Path) -> None:
     )
     (out / "input.md").write_text(_fence("xml", xml), encoding="utf-8")
     (out / "output.md").write_text(
-        _fence("json", json.dumps(expected, indent=2, ensure_ascii=False))
+        _fence("json", json.dumps(shown, indent=2, ensure_ascii=False))
     )
 
 

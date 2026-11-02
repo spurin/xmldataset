@@ -30,24 +30,27 @@ xmldataset requires Python 3.11 or newer. Its only dependency is
 
 ## Example
 
-```pycon
->>> import xmldataset
->>> xml = """
-... <colleagues>
-...     <colleague><title>The Boss</title><email>boss@example.com</email></colleague>
-...     <colleague><title>Minion</title></colleague>
-... </colleagues>"""
->>> profile = """
-... colleagues
-...     colleague
-...         title = dataset:colleagues
-...         email = dataset:colleagues,default:none
-... """
->>> result = xmldataset.parse_using_profile(xml, profile)
->>> for record in result["colleagues"]:
-...     print(record)
-{'title': 'The Boss', 'email': 'boss@example.com'}
-{'title': 'Minion', 'email': 'none'}
+Given this XML:
+
+```xml
+<colleagues>
+    <colleague>
+        <title>The Boss</title>
+        <email>boss@example.com</email>
+    </colleague>
+    <colleague>
+        <title>Minion</title>
+    </colleague>
+</colleagues>
+```
+
+this profile collects every colleague into a dataset called `colleagues`:
+
+```text
+colleagues
+    colleague
+        title = dataset:colleagues
+        email = dataset:colleagues,default:none
 ```
 
 <details>
@@ -82,6 +85,23 @@ colleagues:
 ```
 
 </details>
+
+```python
+import xmldataset
+
+result = xmldataset.parse_using_profile(xml, profile)
+```
+
+```json
+{
+  "colleagues": [
+    {"title": "The Boss", "email": "boss@example.com"},
+    {"title": "Minion", "email": "none"}
+  ]
+}
+```
+
+The Minion has no email address, so the default fills it in.
 
 Load a profile file in any format with `xmldataset.load_profile("profile.yaml")`,
 or stream records from a large file in flat memory:

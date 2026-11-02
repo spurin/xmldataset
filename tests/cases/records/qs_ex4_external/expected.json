@@ -1,0 +1,54 @@
+{
+  "title_and_author": [
+    {
+      "id": "bk101",
+      "author": "Gambardella",
+      "title": "XML Guide",
+      "number": "1"
+    },
+    {
+      "id": "bk102",
+      "author": "Ralls",
+      "title": "Midnight Rain",
+      "number": "1"
+    },
+    {
+      "id": "bk103",
+      "author": "Corets",
+      "title": "Maeve",
+      "number": "2"
+    },
+    {
+      "id": "bk104",
+      "author": "Corets",
+      "title": "Oberon",
+      "number": "2"
+    }
+  ],
+  "title_and_genre": [
+    {
+      "id": "bk101",
+      "title": "XML Guide",
+      "genre": "Computer",
+      "number": "1"
+    },
+    {
+      "id": "bk102",
+      "title": "Midnight Rain",
+      "genre": "Fantasy",
+      "number": "1"
+    },
+    {
+      "id": "bk103",
+      "title": "Maeve",
+      "genre": "Fantasy",
+      "number": "2"
+    },
+    {
+      "id": "bk104",
+      "title": "Oberon",
+      "genre": "Fantasy",
+      "number": "2"
+    }
+  ]
+}

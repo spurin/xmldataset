@@ -1,0 +1,1 @@
+description = "Record-boundary study case 'root_text_field' — 1.x misread an unindented field line; the root element's text is captured."

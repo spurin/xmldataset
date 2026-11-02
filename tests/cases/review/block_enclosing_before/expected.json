@@ -1,0 +1,16 @@
+{
+  "amounts": [
+    {
+      "number": "7",
+      "customer": "C",
+      "amount": "1",
+      "currency": "USD"
+    },
+    {
+      "number": "7",
+      "customer": "C",
+      "amount": "2",
+      "currency": "EUR"
+    }
+  ]
+}

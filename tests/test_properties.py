@@ -169,12 +169,12 @@ def nodes(depth: int) -> st.SearchStrategy[Node]:
             tuple
         )
     )
-    return st.builds(
+    ignored = st.builds(Node, name=simple_names, ignore=st.just(True))
+    captured = st.builds(
         Node,
         name=simple_names,
         fields=st.lists(fields, max_size=2).map(tuple),
         children=children,
-        ignore=st.booleans(),
         new_dataset=st.lists(simple_names, max_size=2, unique=True).map(tuple),
         external_values=st.lists(
             st.builds(
@@ -187,6 +187,7 @@ def nodes(depth: int) -> st.SearchStrategy[Node]:
             max_size=2,
         ).map(tuple),
     )
+    return st.one_of(captured, ignored)
 
 
 profiles = st.lists(nodes(2), min_size=1, max_size=2, unique_by=lambda n: n.name).map(

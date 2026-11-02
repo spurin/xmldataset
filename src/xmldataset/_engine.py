@@ -28,10 +28,10 @@ from collections.abc import Callable, Iterator, Mapping
 from functools import lru_cache
 from typing import Any
 
-from ._errors import ConfigurationError, MissingProcessError
+from ._errors import ConfigurationError, MissingProcessError, ProfileError
 from ._model import ExternalValue, Field, Node, Profile
 
-__all__ = ["Engine", "compile_runtime", "iter_events"]
+__all__ = ["Engine", "check_references", "compile_runtime", "iter_events"]
 
 XML_NAMESPACE = "http://www.w3.org/XML/1998/namespace"
 CHUNK_SIZE = 1 << 16
@@ -47,14 +47,17 @@ class RNode:
 
     __slots__ = (
         "always_follow",
+        "block",
         "children",
         "default_children",
         "depth",
         "exact",
         "external_values",
         "fields",
+        "has_default",
         "hold_datasets",
         "id",
+        "ignore",
         "key",
         "local",
         "name",
@@ -70,7 +73,12 @@ class RNode:
         self.name = node.name if node else ""
         self.parent = parent
         self.depth: int = parent.depth + 1 if parent else 0
+        self.ignore = node.ignore if node else False
+        # An element with its own block in the profile (attributes or children
+        # listed under it) owns its text, just as it owns its attributes.
+        self.block = bool(node.children) if node else True
         self.fields: tuple[Field, ...] = node.fields if node else ()
+        self.has_default = any(f.default is not None for f in self.fields)
         self.external_values = node.external_values if node else ()
         self.resets = node.reset_external_values if node else ()
         self.processing = node.dataset_processing if node else ()
@@ -78,8 +86,8 @@ class RNode:
         self.outputs = [
             (f, (f.prefix or "") + (f.name or self.name)) for f in self.fields
         ]
-        self.children: list[RNode] = []
-        self.exact: dict[str, RNode] = {}
+        self.children: list[RNode] = []  # not ignored, in profile order
+        self.exact: dict[str, RNode] = {}  # includes ignored children
         self.local: dict[str, RNode] = {}
         self.always_follow: set[int] = set()
         self.default_children: list[RNode] = []
@@ -87,16 +95,87 @@ class RNode:
         self.scope_keys: tuple[ExternalKey, ...] = ()
 
     def lookup(self, tag: str) -> RNode | None:
+        """The child matching an element or attribute name, preferring exact
+        names to unprefixed names that match the local name in any namespace."""
         node = self.exact.get(tag)
         if node is None and tag[:1] == "{":
             node = self.local.get(tag[tag.find("}") + 1 :])
         return node
+
+    def text_owner(self) -> RNode:
+        """The element a value of this node's own text belongs to (rule 1)."""
+        if self.block or self.parent is None:
+            return self
+        return self.parent
+
+
+def _location(node: RNode) -> str:
+    names = []
+    cur: RNode | None = node
+    while cur is not None and cur.parent is not None:
+        names.append(cur.name)
+        cur = cur.parent
+    return " > ".join(reversed(names))
+
+
+def check_references(profile: Profile) -> None:
+    """Directives must refer to datasets and external values the profile produces.
+
+    Raises:
+        ProfileError: A directive names something nothing produces, which is
+            almost always a typo.
+    """
+    datasets: set[str] = set()
+    externals: set[ExternalKey] = set()
+    pending: list[tuple[list[str], Node]] = [([n.name], n) for n in profile.roots]
+    nodes: list[tuple[list[str], Node]] = []
+    while pending:
+        names, node = pending.pop()
+        if node.ignore:
+            continue
+        nodes.append((names, node))
+        for spec in node.fields:
+            out = (spec.prefix or "") + (spec.name or node.name)
+            if spec.dataset is not None:
+                datasets.add(spec.dataset)
+            if spec.external_dataset is not None:
+                externals.add((spec.external_dataset, out))
+        datasets.update(ext.dataset for ext in node.external_values)
+        pending.extend(([*names, child.name], child) for child in node.children)
+    for names, node in nodes:
+        where = " > ".join(names)
+        for dataset in node.new_dataset:
+            if dataset not in datasets:
+                raise ProfileError(
+                    f"__NEW_DATASET__ names {dataset!r},"
+                    " which no field sends values to",
+                    location=where,
+                )
+        for proc in node.dataset_processing:
+            if proc.dataset not in datasets:
+                raise ProfileError(
+                    f"__DATASET_PROCESSING__ names dataset {proc.dataset!r},"
+                    " which no field sends values to",
+                    location=where,
+                )
+        for directive, items in (
+            ("__EXTERNAL_VALUE__", node.external_values),
+            ("__NEW_EXTERNAL_VALUE_HOLDER__", node.reset_external_values),
+        ):
+            for item in items:
+                if (item.external_dataset, item.field) not in externals:
+                    raise ProfileError(
+                        f"{directive}: nothing captures {item.field!r} into external"
+                        f" dataset {item.external_dataset!r}",
+                        location=where,
+                    )
 
 
 class Runtime:
     """A profile compiled for the engine (cached per profile and namespaces)."""
 
     def __init__(self, profile: Profile, namespaces: Mapping[str, str]) -> None:
+        check_references(profile)
         self.nodes: list[RNode] = []
         self.root = self._add(None, None)
         # Build iteratively: profiles may be deeper than the recursion limit.
@@ -106,16 +185,18 @@ class Runtime:
         built: list[tuple[Node, RNode]] = []
         while pending:
             node, parent = pending.pop(0)
-            if node.ignore:
-                continue
             rnode = self._add(node, parent)
+            self._index(parent, rnode, namespaces)
+            if node.ignore:  # indexed so it shadows local-name matches, nothing more
+                continue
             built.append((node, rnode))
             parent.children.append(rnode)
-            self._index(parent, rnode, namespaces)
             pending[:0] = [(child, rnode) for child in node.children]
 
         self.explicit: dict[str, set[int]] = {}
+        # dataset -> enclosing node id -> fields it may still supply (holds)
         self.owner_fields: dict[str, dict[int, set[str]]] = {}
+        self.owner_lists: dict[str, dict[int, set[str]]] = {}
         sources: dict[ExternalKey, list[RNode]] = {}
         consumers: dict[ExternalKey, list[RNode]] = {}
         self.processes: set[str] = set()
@@ -126,30 +207,26 @@ class Runtime:
                 child = next((c for c in rnode.children if c.name == name), None)
                 if child is not None:
                     rnode.always_follow.add(child.id)
-            owner = rnode.parent
-            assert owner is not None
+            owner = rnode.text_owner()
             for spec, out_name in rnode.outputs:
                 if spec.process is not None:
                     self.processes.add(spec.process)
                 if spec.dataset is not None:
-                    self._own(spec.dataset, owner.id, out_name)
+                    self._own(spec.dataset, owner.id, out_name, spec.as_list)
                 if spec.external_dataset is not None:
-                    sources.setdefault((spec.external_dataset, out_name), []).append(
-                        owner
-                    )
+                    key = (spec.external_dataset, out_name)
+                    sources.setdefault(key, []).append(owner)
             for ext in node.external_values:
-                self._own(ext.dataset, rnode.id, ext.name or ext.field)
-                consumers.setdefault((ext.external_dataset, ext.field), []).append(
-                    rnode
-                )
+                self._own(ext.dataset, rnode.id, ext.name or ext.field, False)
+                key = (ext.external_dataset, ext.field)
+                consumers.setdefault(key, []).append(rnode)
             for proc in node.dataset_processing:
                 self.processes.add(proc.process)
         for rnode in self.nodes:
             rnode.default_children = [
                 c
                 for c in rnode.children
-                if any(f.default is not None for f in c.fields)
-                or (not c.fields and c.id in rnode.always_follow)
+                if c.has_default or (c.id in rnode.always_follow and c.children)
             ]
             rnode.hold_datasets = tuple(
                 ds for ds, owners in self.owner_fields.items() if rnode.id in owners
@@ -172,8 +249,12 @@ class Runtime:
         self.nodes.append(rnode)
         return rnode
 
-    def _own(self, dataset: str, owner_id: int, name: str) -> None:
+    def _own(self, dataset: str, owner_id: int, name: str, as_list: bool) -> None:
         self.owner_fields.setdefault(dataset, {}).setdefault(owner_id, set()).add(name)
+        if as_list:
+            self.owner_lists.setdefault(dataset, {}).setdefault(owner_id, set()).add(
+                name
+            )
 
     @staticmethod
     def _index(parent: RNode, rnode: RNode, namespaces: Mapping[str, str]) -> None:
@@ -229,16 +310,26 @@ def compile_runtime(profile: Profile, namespaces: Mapping[str, str] | None) -> R
 
 
 class Record:
-    __slots__ = ("data", "dataset", "max_depth", "occ", "paths", "pending", "real")
+    __slots__ = (
+        "data",
+        "dataset",
+        "emitted",
+        "max_depth",
+        "occ",
+        "paths",
+        "pending",
+        "real",
+    )
 
     def __init__(self, dataset: str, data: dict[str, Any]) -> None:
         self.dataset = dataset
         self.data = data
-        self.occ: dict[int, int] = {}  # profile node id -> occurrence id
-        self.paths: dict[str, OccPath] = {}  # field -> where its value came from
+        self.occ: dict[int, int] = {}  # node id -> occurrence id, for boundaries
+        self.paths: dict[str, OccPath] = {}  # field -> the element its value is from
         self.pending: dict[str, tuple[ExternalKey, int]] = {}
         self.real = 0  # values written from the document (not inherited)
-        self.max_depth = 0
+        self.max_depth = 0  # depth of the deepest element its values are from
+        self.emitted = False
 
 
 class Frame:
@@ -308,7 +399,7 @@ class Engine:
             node = pnode.exact.get(tag)
             if node is None and tag[:1] == "{":
                 node = pnode.local.get(tag[tag.find("}") + 1 :])
-            if node is None:
+            if node is None or node.ignore:
                 stack.append(Frame(None, elem, (), -1))
                 return
             if parent.matched is not None:
@@ -316,7 +407,7 @@ class Engine:
             base = parent.path
         else:
             node = self.rt.root.lookup(elem.tag)
-            if node is None:
+            if node is None or node.ignore:
                 stack.append(Frame(None, elem, (), -1))
                 return
             base = ()
@@ -342,7 +433,10 @@ class Engine:
             self._forward(ext, frame.path)
         for proc in node.processing:
             current = self.latest.get(proc.dataset)
-            if current is not None:
+            # Only a record holding values from this element is "its" record.
+            if current is not None and any(
+                occ == frame.occ for path in current.paths.values() for _, occ in path
+            ):
                 self.process[proc.process](current.data)
         self._close(frame.occ, node)
 
@@ -362,25 +456,14 @@ class Engine:
         assert node is not None
         elem = frame.elem
         if node.fields:
+            path = frame.path if node.block else frame.base
             for spec, name in node.outputs:
-                self._capture(spec, name, elem.text, frame.base)
+                self._capture(spec, name, elem.text, path)
         attrib = elem.attrib
         if attrib and node.children:
-            local: dict[str, Any] | None = None
-            for child in node.children:
-                if child.key in attrib:
-                    value = attrib[child.key]
-                elif child.key == child.name:  # unprefixed: match any namespace
-                    if local is None:
-                        local = {
-                            k[k.find("}") + 1 :]: v
-                            for k, v in attrib.items()
-                            if k[:1] == "{"
-                        }
-                    if child.name not in local:
-                        continue
-                    value = local[child.name]
-                else:
+            for key, value in attrib.items():
+                child = node.lookup(key)
+                if child is None or child.ignore:
                     continue
                 if frame.matched is not None:
                     frame.matched.add(child.id)
@@ -388,16 +471,22 @@ class Engine:
                     self._capture(spec, name, value, frame.path)
 
     def _defaults(self, child: RNode, path: OccPath, parent: RNode) -> None:
-        if child.fields:
+        """Apply defaults for ``child``, which is missing from its parent."""
+        stand_in: OccPath | None = None
+        if child.block or child.id in parent.always_follow:
+            self.next_occ += 1  # a stand-in occurrence for the missing element
+            stand_in = (*path, (child.id, self.next_occ))
+        if child.has_default:
+            own = stand_in if child.block and stand_in is not None else path
             for spec, name in child.outputs:
                 if spec.default is not None:
-                    self._capture(spec, name, spec.default, path)
-        elif child.id in parent.always_follow:
-            self.next_occ += 1  # a stand-in occurrence for the missing element
-            inner = (*path, (child.id, self.next_occ))
+                    self._capture(spec, name, spec.default, own)
+        if child.id in parent.always_follow and stand_in is not None:
             for grandchild in child.children:
-                if grandchild.fields or grandchild.id in child.always_follow:
-                    self._defaults(grandchild, inner, child)
+                if grandchild.has_default or (
+                    grandchild.id in child.always_follow and grandchild.children
+                ):
+                    self._defaults(grandchild, stand_in, child)
 
     def _capture(self, spec: Field, name: str, value: Any, path: OccPath) -> None:
         if spec.process is not None:
@@ -427,6 +516,7 @@ class Engine:
             if waiter_scope != scope or name not in record.pending:
                 keep.append((record, name, waiter_scope))
                 continue
+            assert not record.emitted, "a released record received a value"
             del record.pending[name]
             record.data[name] = value
             touched.add(record.dataset)
@@ -495,6 +585,22 @@ class Engine:
                     return ((RECORD_ELEMENT, path[i][1]), *path[: i + 1])
         return path
 
+    def _reachable(self, record: Record, node_id: int, occ: int) -> bool:
+        """Can a value still arriving from occurrence ``occ`` of an enclosing
+        element ``node_id`` reach ``record``? (Rule 4.)
+
+        True when the element is still open, the record belongs to that
+        occurrence, and the record holds values from deeper inside it. Holding
+        records back (``_ready``) and copying late values into them
+        (``_write``) both use this, so they cannot disagree.
+        """
+        return (
+            node_id >= 0
+            and occ in self.open_occ
+            and record.occ.get(node_id) == occ
+            and record.max_depth > self.depth[node_id]
+        )
+
     def _write(
         self,
         dataset: str,
@@ -505,26 +611,33 @@ class Engine:
         as_list: bool = False,
         pending: tuple[ExternalKey, int] | None = None,
     ) -> None:
-        bpath = self._boundary(dataset, path) if dataset in self.rt.explicit else path
         record = self.latest.get(dataset)
-        # Occurrence ids are unique per element, so a record that already holds
-        # the deepest occurrence of this path also holds all of its ancestors.
-        same = False
-        if record is not None and bpath:
-            node_id, occ = bpath[-1]
-            same = record.occ.get(node_id) == occ
-            if same and not as_list and record.max_depth > self.depth[node_id]:
-                # A value from an enclosing element: share it with every record
-                # already started inside that element (which may still be open).
+        if record is not None and path:
+            node_id, occ = path[-1]
+            if record.occ.get(node_id) == occ and (
+                record.max_depth > self.depth[node_id] or len(self.queues[dataset]) > 1
+            ):
+                # A value from an element enclosing earlier records: copy it into
+                # every one it can still reach. They form the tail of the queue.
                 applied = False
                 for held in reversed(self.queues[dataset]):
                     if held.occ.get(node_id) != occ:
                         break
-                    if name not in held.paths:
-                        self._set(held, name, value, path, None, pending, as_list=False)
+                    if not self._reachable(held, node_id, occ):
+                        continue
+                    if name not in held.paths or (as_list and held.paths[name] == path):
+                        self._set(held, name, value, path, None, pending, as_list)
                         applied = True
                 if applied:
                     return
+        bpath = self._boundary(dataset, path) if dataset in self.rt.explicit else path
+        # Occurrence ids are unique per element, so a record that already holds
+        # the deepest occurrence of this path also holds all of its ancestors.
+        same = (
+            bool(bpath)
+            and record is not None
+            and (record.occ.get(bpath[-1][0]) == bpath[-1][1])
+        )
         if record is None or (name in record.paths and not as_list):
             record = self._new_record(dataset, record, path, name)
             same = False
@@ -534,9 +647,7 @@ class Engine:
                 if occ_map.get(node_id, occ) != occ:
                     record = self._new_record(dataset, record, path, name)
                     break
-        self._set(
-            record, name, value, path, None if same else bpath, pending, as_list=as_list
-        )
+        self._set(record, name, value, path, None if same else bpath, pending, as_list)
 
     def _set(
         self,
@@ -546,16 +657,18 @@ class Engine:
         path: OccPath,
         bpath: OccPath | None,
         pending: tuple[ExternalKey, int] | None,
-        *,
         as_list: bool,
     ) -> None:
         """Store a value; ``bpath`` is None when the record already holds it."""
+        assert not record.emitted, "a released record received a value"
+        had = name in record.paths
         record.paths[name] = path
         if bpath:
             occ_map = record.occ
             for node_id, occ in bpath:
                 occ_map[node_id] = occ
-            depth = self.depth[bpath[-1][0]]
+        if path:
+            depth = self.depth[path[-1][0]]
             if depth > record.max_depth:
                 record.max_depth = depth
         record.real += 1
@@ -563,7 +676,11 @@ class Engine:
             record.pending[name] = pending
             self.waiting.setdefault(pending[0], []).append((record, name, pending[1]))
         elif as_list:
-            record.data.setdefault(name, []).append(value)
+            current = record.data.get(name)
+            if had and isinstance(current, list):
+                current.append(value)
+            else:  # never append to a list that came from global_values
+                record.data[name] = [value]
         else:
             record.data[name] = value
 
@@ -584,8 +701,8 @@ class Engine:
                 bsource = self._boundary(dataset, source)
                 for node_id, occ in bsource:
                     record.occ[node_id] = occ
-                if bsource:
-                    record.max_depth = max(record.max_depth, self.depth[bsource[-1][0]])
+                if source:
+                    record.max_depth = max(record.max_depth, self.depth[source[-1][0]])
                 waiting = previous.pending.get(field)
                 if waiting is not None:
                     record.pending[field] = waiting
@@ -606,18 +723,20 @@ class Engine:
             return False
         owners = self.rt.owner_fields.get(record.dataset)
         if owners:
-            open_occ = self.open_occ
+            lists = self.rt.owner_lists.get(record.dataset, {})
             for node_id, occ in record.occ.items():
-                if occ in open_occ:
-                    names = owners.get(node_id)
-                    if names and not names <= record.paths.keys():
-                        return False  # an enclosing element may still supply a value
+                names = owners.get(node_id)
+                if names is None or not self._reachable(record, node_id, occ):
+                    continue
+                if not names <= record.paths.keys() or node_id in lists:
+                    return False  # an enclosing element may still supply a value
         return True
 
     def _drain(self, dataset: str) -> None:
         queue = self.queues.get(dataset)
         while queue and self._ready(queue[0]):
             record = queue.popleft()
+            record.emitted = True
             if record.real > 0:
                 self.out.append((dataset, record.data))
 

@@ -119,6 +119,22 @@ class Node:
     dataset_processing: tuple[DatasetProcess, ...] = ()
     always_follow: tuple[str, ...] = ()
 
+    def __post_init__(self) -> None:
+        if self.ignore and (
+            self.fields
+            or self.children
+            or self.new_dataset
+            or self.external_values
+            or self.reset_external_values
+            or self.dataset_processing
+            or self.always_follow
+        ):
+            from ._errors import ProfileError
+
+            raise ProfileError(
+                f"{self.name!r} is ignored, so it cannot also have fields or contents"
+            )
+
     def child(self, name: str) -> Node | None:
         """Return the child called ``name``, or ``None``."""
         for node in self.children:
@@ -161,7 +177,15 @@ class Profile:
         """Compile a profile written as JSON."""
         import json
 
-        return cls.from_dict(json.loads(text))
+        from ._errors import ProfileError
+
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise ProfileError(
+                f"invalid JSON: {exc.msg}", line=exc.lineno, column=exc.colno
+            ) from None
+        return cls.from_dict(data)
 
     @classmethod
     def from_yaml(cls, text: str | bytes) -> Profile:

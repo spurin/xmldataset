@@ -1,0 +1,1 @@
+description = "Review #5. A missing <details> still applies the defaults inside it, although details also captures its own text."

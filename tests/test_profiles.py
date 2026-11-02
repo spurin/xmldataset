@@ -345,3 +345,52 @@ def test_schema_file_is_valid_json_with_a_stable_id() -> None:
         == "https://xmldataset.readthedocs.io/en/stable/schema/profile-v1.json"
     )
     assert json.loads(json.dumps(schema)) == schema
+
+
+# --- regressions from the 2.0 review ----------------------------------------
+
+
+def test_backslash_only_escapes_quotes_and_backslashes() -> None:
+    field = (
+        Profile.from_dsl('r\n  a = dataset:d,default:"C:\\Program Files\\\\x \\"q\\""')
+        .roots[0]
+        .children[0]
+        .fields[0]
+    )
+    assert field.default == 'C:\\Program Files\\x "q"'
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "r\n  a = dataset:d\n  a = __IGNORE__",
+        "r\n  a = __IGNORE__\n  a\n    b = dataset:d",
+    ],
+)
+def test_ignored_names_cannot_also_be_captured(text: str) -> None:
+    with pytest.raises(ProfileError, match="'a' is ignored"):
+        Profile.from_dsl(text)
+
+
+def test_ignored_names_cannot_also_be_captured_in_mappings() -> None:
+    with pytest.raises(ProfileError, match="'a' is ignored"):
+        Profile.from_dict({"r": {"a": {"$ignore": True, "b": "d"}}})
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "a:\n  title: [{dataset: d, yes: x}]\n",
+        "a:\n  title: [{dataset: d, 1: x}]\n",
+        "a:\n  title: {$dataset: d, 5: x}\n",
+    ],
+)
+def test_non_string_keys_in_fields_are_profile_errors(text: str) -> None:
+    with pytest.raises(ProfileError, match="keys must be strings"):
+        Profile.from_yaml(text)
+
+
+def test_bad_json_is_a_profile_error() -> None:
+    with pytest.raises(ProfileError, match="invalid JSON") as info:
+        Profile.from_json('{"r": ')
+    assert info.value.line == 1

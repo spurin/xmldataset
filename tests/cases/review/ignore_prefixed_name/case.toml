@@ -1,0 +1,5 @@
+description = "Review #6. Ignoring a:title must not let the plain title name pick it up by local name."
+v2_only = true
+
+[options.namespaces]
+a = "urn:a"

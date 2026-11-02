@@ -1,0 +1,5 @@
+description = "An exact (prefixed) name takes an attribute or element before a plain name's any-namespace match."
+v2_only = true
+
+[options.namespaces]
+a = "urn:a"

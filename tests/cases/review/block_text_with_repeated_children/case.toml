@@ -1,0 +1,1 @@
+description = "A <section> with its own block owns its text, at the same level as its <para> children, so a repeated para's orphan record does not inherit it (rule 3; use list:true to keep them together)."

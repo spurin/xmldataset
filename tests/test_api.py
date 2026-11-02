@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import json
 import logging
+import re
 import tracemalloc
 import xml.etree.ElementTree as ET
 from collections.abc import Iterator
@@ -458,3 +459,83 @@ def test_load_profile_reports_bad_json(tmp_path: Path) -> None:
 
 def test_version() -> None:
     assert xmldataset.__version__.startswith("2.")
+
+
+# --- regressions from the 2.0 review ----------------------------------------
+
+
+def test_an_incomplete_record_does_not_hold_back_later_ones() -> None:
+    # The first record lacks "value" but can never receive it (a later <value>
+    # belongs to the next pair), so it must be released before the document ends.
+    def chunks() -> Iterator[bytes]:
+        yield b"<r><name>X</name>" + b"<name>A</name><value>1</value>" * 50
+        raise AssertionError("read past the records we asked for")
+
+    class Source(io.RawIOBase):
+        def __init__(self) -> None:
+            self.it = chunks()
+
+        def read(self, size: int = -1) -> bytes:
+            return next(self.it)
+
+    records = iter_records(
+        cast(Any, Source()), "r\n  name = dataset:d\n  value = dataset:d"
+    )
+    assert next(records) == ("d", {"name": "X"})
+    assert next(records) == ("d", {"name": "A", "value": "1"})
+
+
+def test_global_values_are_not_shared_or_mutated() -> None:
+    globals_ = {"tag": [], "src": "g"}
+    output = parse_using_profile(
+        "<r><b><tag>x</tag></b><b><tag>y</tag></b></r>",
+        "r\n  b\n    tag = dataset:d,list:true",
+        global_values=globals_,
+    )
+    assert output == {"d": [{"tag": ["x"], "src": "g"}, {"tag": ["y"], "src": "g"}]}
+    assert globals_ == {"tag": [], "src": "g"}
+
+
+def test_dataset_processing_only_sees_its_own_element_record() -> None:
+    seen: list[dict[str, Any]] = []
+
+    def inc(record: dict[str, Any]) -> None:
+        seen.append(dict(record))
+        record["n"] = record.get("n", 0) + 1
+
+    profile = (
+        "lib\n  book\n    title = dataset:books\n    __DATASET_PROCESSING__ = inc:books"
+    )
+    xml = "<lib><book><title>A</title></book><book/><book/></lib>"
+    assert parse_using_profile(xml, profile, process={"inc": inc}) == {
+        "books": [{"title": "A", "n": 1}]
+    }
+    assert seen == [{"title": "A"}]
+
+
+@pytest.mark.parametrize(
+    ("profile", "message"),
+    [
+        (
+            "r\n  a = dataset:d\n  __NEW_DATASET__ = d1,d2",
+            "__NEW_DATASET__ names 'd1,d2'",
+        ),
+        (
+            "r\n  a = dataset:d\n  __DATASET_PROCESSING__ = p:nope",
+            "names dataset 'nope'",
+        ),
+        (
+            "r\n  a = dataset:d\n  __EXTERNAL_VALUE__ = ext:a:d",
+            "nothing captures 'a' into external dataset 'ext'",
+        ),
+        (
+            "r\n  a = dataset:d\n  __NEW_EXTERNAL_VALUE_HOLDER__ = ext:a",
+            "nothing captures 'a' into external dataset 'ext'",
+        ),
+    ],
+)
+def test_directives_must_refer_to_something_the_profile_produces(
+    profile: str, message: str
+) -> None:
+    with pytest.raises(ProfileError, match=re.escape(message)):
+        parse_using_profile("<r/>", profile, process={"p": str})

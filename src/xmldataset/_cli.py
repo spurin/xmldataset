@@ -13,6 +13,7 @@ from typing import IO, Any
 
 from . import __version__
 from ._api import iter_records, json_schema, parse_using_profile
+from ._engine import check_references
 from ._errors import MissingProcessError, XMLDatasetError
 from ._structured import load_profile
 
@@ -111,6 +112,7 @@ def _validate(args: argparse.Namespace) -> int:
     for path in args.profiles:
         try:
             profile = load_profile(path)
+            check_references(profile)
         except XMLDatasetError as exc:
             print(f"{path}: {exc}", file=sys.stderr)
             failed = True

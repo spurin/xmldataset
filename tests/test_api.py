@@ -539,3 +539,31 @@ def test_directives_must_refer_to_something_the_profile_produces(
 ) -> None:
     with pytest.raises(ProfileError, match=re.escape(message)):
         parse_using_profile("<r/>", profile, process={"p": str})
+
+
+def test_dataset_processing_under_a_field_element_runs() -> None:
+    def shout(record: dict[str, Any]) -> None:
+        record["title"] = record["title"].upper()
+
+    profile = "lib\n  book\n    title = dataset:books\n      __DATASET_PROCESSING__ = shout:books"
+    xml = "<lib><book><title>a</title></book><book><title>b</title></book></lib>"
+    assert parse_using_profile(xml, profile, process={"shout": shout}) == {
+        "books": [{"title": "A"}, {"title": "B"}]
+    }
+
+
+def test_an_ignored_prefixed_name_needs_no_namespace() -> None:
+    profile = "r\n  xl:junk = __IGNORE__\n  a = dataset:d"
+    assert parse_using_profile("<r><a>1</a></r>", profile) == {"d": [{"a": "1"}]}
+
+
+def test_dangling_references_are_caught_when_a_profile_is_loaded(
+    tmp_path: Path,
+) -> None:
+    text = "r\n  a = dataset:d\n  __NEW_DATASET__ = d1,d2\n"
+    with pytest.raises(ProfileError, match="names 'd1,d2'") as info:
+        xmldataset.compile_profile(text)
+    assert info.value.location == "r"
+    (tmp_path / "p.txt").write_text(text, encoding="utf-8")
+    with pytest.raises(ProfileError, match="names 'd1,d2'"):
+        xmldataset.load_profile(tmp_path / "p.txt")

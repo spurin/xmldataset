@@ -383,7 +383,14 @@ def load_profile(path: str | PathLike[str]) -> Profile:
         ProfileError: The profile is invalid.
         OSError: The file cannot be read.
     """
-    file = Path(path)
+    from ._engine import check_references
+
+    profile = _load(Path(path))
+    check_references(profile)
+    return profile
+
+
+def _load(file: Path) -> Profile:
     suffix = file.suffix.lower()
     if suffix in (".yaml", ".yml"):
         return profile_from_dict(load_yaml(file.read_bytes()))

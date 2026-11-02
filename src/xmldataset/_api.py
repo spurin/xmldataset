@@ -11,7 +11,7 @@ from importlib.resources import files
 from typing import IO, Any, TypeAlias
 
 from ._dsl import parse_dsl
-from ._engine import Engine, compile_runtime, iter_events
+from ._engine import Engine, check_references, compile_runtime, iter_events
 from ._errors import ConfigurationError
 from ._model import Profile
 from ._structured import load_profile, profile_from_dict
@@ -84,14 +84,18 @@ def compile_profile(profile: ProfileSource) -> Profile:
         }
     """
     if isinstance(profile, Profile):
-        return profile
-    if isinstance(profile, str):
-        return _from_text(profile)
-    if isinstance(profile, Mapping):
-        return profile_from_dict(profile)
-    raise TypeError(
-        f"profile must be str, a mapping, or a Profile, not {type(profile).__name__}"
-    )
+        compiled = profile
+    elif isinstance(profile, str):
+        compiled = _from_text(profile)
+    elif isinstance(profile, Mapping):
+        compiled = profile_from_dict(profile)
+    else:
+        raise TypeError(
+            "profile must be str, a mapping, or a Profile,"
+            f" not {type(profile).__name__}"
+        )
+    check_references(compiled)
+    return compiled
 
 
 def iter_records(

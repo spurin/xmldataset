@@ -265,6 +265,8 @@ document may still add to it:
   closes. For a field declared on the root element, that means the whole
   document, and [dispatch](python.md#dispatching-batches) callbacks only run at
   the end.
+- **A `list:true` field on an enclosing element**, which may still gain values,
+  so the records inside the element are held until it ends.
 - **An external value that is used before it appears** (a forward reference).
 
 To keep memory flat for very large documents, capture such values where they

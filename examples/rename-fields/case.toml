@@ -1,0 +1,2 @@
+description = "Rename fields with name:."
+input = "../bookshop.xml"

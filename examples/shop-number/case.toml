@@ -1,0 +1,2 @@
+description = "Copy each shop's number into its book records."
+input = "../bookshop.xml"

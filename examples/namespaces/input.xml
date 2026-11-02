@@ -1,0 +1,9 @@
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
+    <entry>
+        <title>First post</title>
+        <media:thumbnail url="https://example.com/1.png"/>
+    </entry>
+    <entry>
+        <title>Second post</title>
+    </entry>
+</feed>

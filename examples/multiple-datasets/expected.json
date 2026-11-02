@@ -1,0 +1,38 @@
+{
+  "title_and_author": [
+    {
+      "author": "Gambardella, Matthew",
+      "title": "XML Developer's Guide"
+    },
+    {
+      "author": "Ralls, Kim",
+      "title": "Midnight Rain"
+    },
+    {
+      "author": "Corets, Eva",
+      "title": "Maeve Ascendant"
+    },
+    {
+      "author": "Corets, Eva",
+      "title": "Oberon's Legacy"
+    }
+  ],
+  "title_and_genre": [
+    {
+      "title": "XML Developer's Guide",
+      "genre": "Computer"
+    },
+    {
+      "title": "Midnight Rain",
+      "genre": "Fantasy"
+    },
+    {
+      "title": "Maeve Ascendant",
+      "genre": "Fantasy"
+    },
+    {
+      "title": "Oberon's Legacy",
+      "genre": "Fantasy"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+<invoice>
+    <amount currency="USD">123.00</amount>
+    <amount currency="EUR">45.50</amount>
+</invoice>

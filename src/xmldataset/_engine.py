@@ -26,7 +26,7 @@ import xml.etree.ElementTree as ET
 from collections import deque
 from collections.abc import Callable, Iterator, Mapping
 from functools import lru_cache
-from typing import Any, cast
+from typing import Any
 
 from ._errors import ConfigurationError, MissingProcessError
 from ._model import ExternalValue, Field, Node, Profile
@@ -242,15 +242,19 @@ class Record:
 
 
 class Frame:
-    __slots__ = ("elem", "flushed", "matched", "node", "occ", "path")
+    __slots__ = ("base", "elem", "flushed", "matched", "node", "occ", "path")
 
-    def __init__(self, node: RNode | None, elem: Any, path: OccPath, occ: int) -> None:
+    def __init__(self, node: RNode | None, elem: Any, base: OccPath, occ: int) -> None:
         self.node = node
         self.elem = elem
-        self.path = path
+        self.base = base  # path of the parent element
+        self.path: OccPath = (*base, (node.id, occ)) if node is not None else ()
         self.occ = occ
         self.flushed = False
-        self.matched: set[int] = set()
+        # Children seen as attributes or elements; only tracked for defaults.
+        self.matched: set[int] | None = (
+            set() if node and node.default_children else None
+        )
 
 
 class Engine:
@@ -291,27 +295,35 @@ class Engine:
     # --- events -------------------------------------------------------------
 
     def start(self, elem: Any) -> None:
-        parent = self.stack[-1] if self.stack else None
-        if parent is None:
-            node = self.rt.root.lookup(elem.tag)
-            base: OccPath = ()
-        elif parent.node is None:
-            self.stack.append(Frame(None, elem, (), -1))
-            return
-        else:
+        stack = self.stack
+        if stack:
+            parent = stack[-1]
+            pnode = parent.node
+            if pnode is None:
+                stack.append(Frame(None, elem, (), -1))
+                return
             if not parent.flushed:
                 self._flush(parent)
-            node = parent.node.lookup(elem.tag)
-            if node is not None:
+            tag = elem.tag
+            node = pnode.exact.get(tag)
+            if node is None and tag[:1] == "{":
+                node = pnode.local.get(tag[tag.find("}") + 1 :])
+            if node is None:
+                stack.append(Frame(None, elem, (), -1))
+                return
+            if parent.matched is not None:
                 parent.matched.add(node.id)
             base = parent.path
-        if node is None:
-            self.stack.append(Frame(None, elem, (), -1))
-            return
+        else:
+            node = self.rt.root.lookup(elem.tag)
+            if node is None:
+                stack.append(Frame(None, elem, (), -1))
+                return
+            base = ()
         self.next_occ += 1
         occ = self.next_occ
         self.open_occ.add(occ)
-        self.stack.append(Frame(node, elem, (*base, (node.id, occ)), occ))
+        stack.append(Frame(node, elem, base, occ))
         for reset in node.resets:
             self._reset_external((reset.external_dataset, reset.field))
 
@@ -322,9 +334,10 @@ class Engine:
             return
         if not frame.flushed:
             self._flush(frame)
-        for child in node.default_children:
-            if child.id not in frame.matched:
-                self._defaults(child, frame.path, node)
+        if frame.matched is not None:
+            for child in node.default_children:
+                if child.id not in frame.matched:
+                    self._defaults(child, frame.path, node)
         for ext in node.external_values:
             self._forward(ext, frame.path)
         for proc in node.processing:
@@ -349,9 +362,8 @@ class Engine:
         assert node is not None
         elem = frame.elem
         if node.fields:
-            parent_path = frame.path[:-1]
             for spec, name in node.outputs:
-                self._capture(spec, name, elem.text, parent_path)
+                self._capture(spec, name, elem.text, frame.base)
         attrib = elem.attrib
         if attrib and node.children:
             local: dict[str, Any] | None = None
@@ -370,7 +382,8 @@ class Engine:
                     value = local[child.name]
                 else:
                     continue
-                frame.matched.add(child.id)
+                if frame.matched is not None:
+                    frame.matched.add(child.id)
                 for spec, name in child.outputs:
                     self._capture(spec, name, value, frame.path)
 
@@ -492,35 +505,38 @@ class Engine:
         as_list: bool = False,
         pending: tuple[ExternalKey, int] | None = None,
     ) -> None:
-        bpath = self._boundary(dataset, path)
+        bpath = self._boundary(dataset, path) if dataset in self.rt.explicit else path
         record = self.latest.get(dataset)
-        if record is not None and bpath and not as_list:
+        # Occurrence ids are unique per element, so a record that already holds
+        # the deepest occurrence of this path also holds all of its ancestors.
+        same = False
+        if record is not None and bpath:
             node_id, occ = bpath[-1]
-            if (
-                occ in self.open_occ
-                and record.occ.get(node_id) == occ
-                and record.max_depth > self.depth[node_id]
-            ):
+            same = record.occ.get(node_id) == occ
+            if same and not as_list and record.max_depth > self.depth[node_id]:
                 # A value from an enclosing element: share it with every record
-                # already started inside that element.
+                # already started inside that element (which may still be open).
                 applied = False
                 for held in reversed(self.queues[dataset]):
                     if held.occ.get(node_id) != occ:
                         break
                     if name not in held.paths:
-                        self._set(
-                            held, name, value, path, bpath, pending, as_list=False
-                        )
+                        self._set(held, name, value, path, None, pending, as_list=False)
                         applied = True
                 if applied:
                     return
-        if (
-            record is None
-            or (name in record.paths and not as_list)
-            or any(record.occ.get(n, o) != o for n, o in bpath)
-        ):
+        if record is None or (name in record.paths and not as_list):
             record = self._new_record(dataset, record, path, name)
-        self._set(record, name, value, path, bpath, pending, as_list=as_list)
+            same = False
+        elif not same:
+            occ_map = record.occ
+            for node_id, occ in bpath:
+                if occ_map.get(node_id, occ) != occ:
+                    record = self._new_record(dataset, record, path, name)
+                    break
+        self._set(
+            record, name, value, path, None if same else bpath, pending, as_list=as_list
+        )
 
     def _set(
         self,
@@ -528,16 +544,20 @@ class Engine:
         name: str,
         value: Any,
         path: OccPath,
-        bpath: OccPath,
+        bpath: OccPath | None,
         pending: tuple[ExternalKey, int] | None,
         *,
         as_list: bool,
     ) -> None:
+        """Store a value; ``bpath`` is None when the record already holds it."""
         record.paths[name] = path
-        for node_id, occ in bpath:
-            record.occ[node_id] = occ
         if bpath:
-            record.max_depth = max(record.max_depth, self.depth[bpath[-1][0]])
+            occ_map = record.occ
+            for node_id, occ in bpath:
+                occ_map[node_id] = occ
+            depth = self.depth[bpath[-1][0]]
+            if depth > record.max_depth:
+                record.max_depth = depth
         record.real += 1
         if pending is not None:
             record.pending[name] = pending
@@ -665,18 +685,21 @@ def iter_events(engine: Engine, source: Any) -> Iterator[tuple[str, dict[str, An
         open_elements: list[ET.Element] = []
 
         def handle() -> Iterator[tuple[str, dict[str, Any]]]:
+            start, end = engine.start, engine.end
             # typeshed's read_events() also covers namespace events, which are
             # not requested here: every event is ("start" | "end", Element).
-            for pair in parser.read_events():
-                event, elem = cast(tuple[str, ET.Element], pair)
+            events: Iterator[tuple[str, ET.Element]] = parser.read_events()  # type: ignore[assignment]
+            for event, elem in events:
                 if event == "start":
                     open_elements.append(elem)
-                    engine.start(elem)
+                    start(elem)
                 else:
-                    engine.end(elem)
+                    end(elem)
                     open_elements.pop()
-                    if open_elements:  # free finished elements as we go
-                        open_elements[-1].remove(elem)
+                    if open_elements:
+                        # Free finished elements as we go. Earlier siblings are
+                        # already gone, so this one is always the first child.
+                        del open_elements[-1][0]
                     elem.clear()
                 while out:
                     yield out.popleft()

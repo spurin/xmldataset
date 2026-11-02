@@ -72,6 +72,42 @@ To build the documentation locally:
 uv run --group docs sphinx-build -W -b html docs docs/_build/html
 ```
 
+## Project layout
+
+| Path | Contents |
+| --- | --- |
+| `src/xmldataset/_model.py` | The typed profile model every format compiles to |
+| `src/xmldataset/_dsl.py` | The text syntax: parser and writer |
+| `src/xmldataset/_structured.py` | YAML/JSON/dict profiles; `profile-v1.schema.json` is their JSON Schema |
+| `src/xmldataset/_engine.py` | The streaming engine and its record rules |
+| `src/xmldataset/_api.py`, `_cli.py` | Public functions and the `xmldataset` command |
+| `tests/cases/` | Data-driven test cases (see below) |
+| `examples/` | Documentation examples; also run as test cases |
+| `tests/legacy/` | The frozen 1.0.4 engine, used only as a test oracle |
+| `docs/` | Sphinx + MyST documentation; `docs/_ext/` renders `examples/` |
+
+## Test cases and examples
+
+Each directory in `tests/cases/<group>/` and `examples/` is one case:
+
+- `profile.dsl`: the profile in the text syntax;
+- `input.xml`, or an `input = "..."` path in `case.toml`;
+- `expected.json`: the output xmldataset must produce;
+- `case.toml`: a `description`, optional `[options]`, and `v2_only = true` when
+  1.x cannot read the profile;
+- `legacy.json`: only when the output deliberately differs from 1.x.
+
+Every case runs three times: with the text profile, and with it converted to
+YAML and to JSON. It also runs through the frozen 1.0.4 engine, which must
+produce `legacy.json` (or `expected.json` when there is no `legacy.json`). A
+behaviour change is therefore always a reviewed file, never an accident.
+
+Adding a directory is enough to add a test. Examples in `examples/` also appear
+in the documentation as synchronised Text | YAML | JSON tabs, and the docs build
+fails if any of the three formats stops producing `expected.json`.
+
+`pycon` code blocks in `README.md` and `docs/*.md` run as doctests.
+
 ## Pull request guidelines
 
 1. Include tests. Bug fixes should come with a test that fails without the fix.

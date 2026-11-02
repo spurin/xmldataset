@@ -7,73 +7,119 @@
 
 ![xmldataset logo](https://xmldataset.readthedocs.io/en/latest/_static/logo.jpg)
 
-A Python library that simplifies the extraction of datasets from XML content.
+**Extract Python datasets from XML with a simple profile that mirrors the XML.**
 
-XML is a simple markup format. Whilst simple, extracting data of interest is often more
-complicated than it needs to be.
+A *profile* lists the elements and attributes you want, indented the same way as
+the XML, and names the *dataset* each value belongs to. xmldataset returns every
+dataset as a list of records (plain dicts), ready for JSON, CSV, pandas or a
+database.
 
-xmldataset addresses this through an easy to use plaintext declaration (a *profile*) that
-follows the structure of the XML document. The profile is indented, matching the XML
-structure, and the data we are interested in is tagged against a dataset.
+**Profiles can be written as indented text, YAML or JSON.** All three are
+equivalent, and you can convert between them at any time.
 
 - Documentation: <https://xmldataset.readthedocs.io>
-- Source: <https://github.com/spurin/xmldataset>
+- Upgrading from 1.x: <https://xmldataset.readthedocs.io/en/stable/migration.html>
 
 ## Installation
 
 ```console
-pip install xmldataset
+pip install xmldataset            # text and JSON profiles
+pip install "xmldataset[yaml]"    # adds YAML profiles
 ```
 
-xmldataset requires Python 3.11 or newer and has no dependencies.
+xmldataset requires Python 3.11 or newer and has no other dependencies.
 
 ## Example
 
-```python
-import xmldataset
-
-xml = """<?xml version="1.0"?>
-<colleagues>
-    <colleague>
-        <title>The Boss</title>
-        <phone>+1 202-663-9108</phone>
-        <email>boss@the_company.com</email>
-    </colleague>
-    <colleague>
-        <title>Admin Assistant</title>
-        <phone>+1 347-999-5454</phone>
-        <email>admin@the_company.com</email>
-    </colleague>
-</colleagues>"""
-
-profile = """
-colleagues
-    colleague
-        title = dataset:colleagues
-        phone = dataset:colleagues
-        email = dataset:colleagues"""
-
-print(xmldataset.parse_using_profile(xml, profile))
+```pycon
+>>> import xmldataset
+>>> xml = """
+... <colleagues>
+...     <colleague><title>The Boss</title><email>boss@example.com</email></colleague>
+...     <colleague><title>Minion</title></colleague>
+... </colleagues>"""
+>>> profile = """
+... colleagues
+...     colleague
+...         title = dataset:colleagues
+...         email = dataset:colleagues,default:none
+... """
+>>> result = xmldataset.parse_using_profile(xml, profile)
+>>> for record in result["colleagues"]:
+...     print(record)
+{'title': 'The Boss', 'email': 'boss@example.com'}
+{'title': 'Minion', 'email': 'none'}
 ```
 
-```text
-{'colleagues': [{'title': 'The Boss', 'phone': '+1 202-663-9108', 'email': 'boss@the_company.com'}, {'title': 'Admin Assistant', 'phone': '+1 347-999-5454', 'email': 'admin@the_company.com'}]}
+<details>
+<summary>The same profile in YAML</summary>
+
+```yaml
+colleagues:
+  colleague:
+    title: colleagues
+    email:
+      $dataset: colleagues
+      $default: none
+```
+
+</details>
+
+<details>
+<summary>The same profile in JSON</summary>
+
+```json
+{
+  "colleagues": {
+    "colleague": {
+      "title": "colleagues",
+      "email": {
+        "$dataset": "colleagues",
+        "$default": "none"
+      }
+    }
+  }
+}
+```
+
+</details>
+
+Load a profile file in any format with `xmldataset.load_profile("profile.yaml")`,
+or stream records from a large file in flat memory:
+
+```python
+from pathlib import Path
+
+for dataset, record in xmldataset.iter_records(Path("huge.xml"), profile):
+    ...
+```
+
+Or skip Python entirely:
+
+```console
+xmldataset run profile.yaml data.xml --format csv --dataset colleagues
+xmldataset convert profile.txt --to yaml
 ```
 
 ## Features
 
-- Handles missing data from the XML structure: if it's missing in the XML, it is not
-  populated in the dataset
-- Handles both XML elements and attributes using the plaintext profile (attributes are
-  depicted as a sublevel of an element)
-- Easy to rename XML attributes and elements during processing to meet your requirements
-- Inline manipulation of XML content through the process mechanism
-- Dispatch mechanism, allowing datasets to be dispatched for every N instances to enable
-  asynchronous processing
+- **Three profile formats**: indented text, YAML or JSON, with a JSON Schema for
+  editor completion and validation.
+- **Elements and attributes**, with renaming, prefixes, defaults, lists of
+  repeated values and per-value process functions.
+- **Correct records by construction**: a record never mixes values from two
+  elements, and values from an enclosing element (a shop's number, say) are
+  copied into every record inside it.
+- **Streams documents of any size** in flat memory from a string, bytes, a path
+  or a file, and hands over each record as soon as it is complete.
+- **Namespaces**, matched by local name or by prefix.
+- **A command-line tool** to run, convert and validate profiles.
+- **Typed, with no dependencies**; YAML support is an optional extra.
 
 ## Contributing
 
-See [CONTRIBUTING.md](https://github.com/spurin/xmldataset/blob/master/CONTRIBUTING.md). Changes are recorded in
+See [CONTRIBUTING.md](https://github.com/spurin/xmldataset/blob/master/CONTRIBUTING.md).
+Changes are recorded in
 [CHANGELOG.md](https://github.com/spurin/xmldataset/blob/master/CHANGELOG.md).
 
 ## License

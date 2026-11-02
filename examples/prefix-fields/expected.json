@@ -1,0 +1,20 @@
+{
+  "books": [
+    {
+      "book_id": "bk101",
+      "book_title": "XML Developer's Guide"
+    },
+    {
+      "book_id": "bk102",
+      "book_title": "Midnight Rain"
+    },
+    {
+      "book_id": "bk103",
+      "book_title": "Maeve Ascendant"
+    },
+    {
+      "book_id": "bk104",
+      "book_title": "Oberon's Legacy"
+    }
+  ]
+}

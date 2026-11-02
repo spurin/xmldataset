@@ -68,7 +68,7 @@ default-groups = ["dev"]
 docs = { requires-python = ">=3.13" }
 
 [tool.uv.build-backend]
-source-include = ["tests/**", "CHANGELOG.md"]
+source-include = ["tests/**", "examples/**", "CHANGELOG.md"]
 
 [tool.ruff]
 line-length = 88
@@ -106,4 +106,4 @@ source = ["xmldataset"]
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
-fail_under = 85
+fail_under = 95

@@ -1,0 +1,17 @@
+{
+  "books": [
+    {
+      "shop": "1",
+      "manager": "Ann",
+      "title": "Dune"
+    },
+    {
+      "title": "Emma",
+      "shop": "2",
+      "manager": "Bob"
+    },
+    {
+      "title": "Ulysses"
+    }
+  ]
+}

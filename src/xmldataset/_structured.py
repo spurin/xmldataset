@@ -150,7 +150,11 @@ def _node(name: Any, value: Any, loc: str) -> Node:
 
     for key in value:
         if not isinstance(key, str):
-            raise _err(f"keys must be strings, not {type(key).__name__}", loc)
+            raise _err(
+                f"keys must be strings, not {type(key).__name__} (quote it; YAML reads"
+                " yes/no/on/off as booleans)",
+                loc,
+            )
         if key.startswith("$") and key not in NODE_KEYS:
             raise _err(f"unknown setting {key!r}{suggest(key, NODE_KEYS)}", loc)
     fields: list[Field] = []
@@ -286,7 +290,12 @@ def _node_value(node: Node) -> Any:
         if not node.fields:
             return None
         items = [_spec_value(spec) for spec in node.fields]
-        return items[0] if len(items) == 1 and isinstance(items[0], str) else items
+        if len(items) > 1:
+            return items
+        item = items[0]
+        return (
+            item if isinstance(item, str) else {f"${key}": v for key, v in item.items()}
+        )
     out: dict[str, Any] = {}
     if len(node.fields) == 1:
         value = _spec_value(node.fields[0])

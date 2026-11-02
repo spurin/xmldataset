@@ -1,0 +1,18 @@
+{
+  "colleagues": [
+    {
+      "title": "The Boss",
+      "phone": "+1 202-663-9108",
+      "email": "boss@the_company.com"
+    },
+    {
+      "title": "Admin Assistant",
+      "phone": "+1 347-999-5454",
+      "email": "admin@the_company.com"
+    },
+    {
+      "title": "Minion",
+      "phone": "+1 792-123-4109"
+    }
+  ]
+}

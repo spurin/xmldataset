@@ -8,9 +8,9 @@ repos:
       - id: check-yaml
       - id: end-of-file-fixer
       - id: trailing-whitespace
-        # Trailing spaces inside these files' XML are element text; stripping them
-        # would change the parsed output.
-        exclude: ^(examples/|docs/quickstart\.rst$)
+        # Trailing spaces inside XML are element text; stripping them would
+        # change the parsed output of the examples and test cases.
+        exclude: \.xml$
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: 25bcf95026b96e2dd3c0aec3090c3d6ef6ca2e6c # frozen: v0.17.3

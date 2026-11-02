@@ -1,0 +1,46 @@
+{
+  "title_and_author": [
+    {
+      "id": "bk101",
+      "author": "Gambardella, Matthew",
+      "title": "XML Developer's Guide"
+    },
+    {
+      "id": "bk102",
+      "author": "Ralls, Kim",
+      "title": "Midnight Rain"
+    },
+    {
+      "id": "bk103",
+      "author": "Corets, Eva",
+      "title": "Maeve Ascendant"
+    },
+    {
+      "id": "bk104",
+      "author": "Corets, Eva",
+      "title": "Oberon's Legacy"
+    }
+  ],
+  "title_and_genre": [
+    {
+      "id": "bk101",
+      "title": "XML Developer's Guide",
+      "genre": "Computer"
+    },
+    {
+      "id": "bk102",
+      "title": "Midnight Rain",
+      "genre": "Fantasy"
+    },
+    {
+      "id": "bk103",
+      "title": "Maeve Ascendant",
+      "genre": "Fantasy"
+    },
+    {
+      "id": "bk104",
+      "title": "Oberon's Legacy",
+      "genre": "Fantasy"
+    }
+  ]
+}

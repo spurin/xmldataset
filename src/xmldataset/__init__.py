@@ -44,6 +44,23 @@ __all__ = [
     "parse_using_profile",
 ]
 
+# Public classes report the package they are imported from, so tracebacks and
+# reprs say xmldataset.ProfileError rather than naming a private module.
+for _public in (
+    ConfigurationError,
+    DatasetProcess,
+    ExternalReset,
+    ExternalValue,
+    Field,
+    MissingProcessError,
+    Node,
+    Profile,
+    ProfileError,
+    XMLDatasetError,
+):
+    _public.__module__ = __name__
+del _public
+
 __author__ = "James Spurin"
 __email__ = "james@spurin.com"
 

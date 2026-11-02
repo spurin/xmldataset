@@ -1,0 +1,2 @@
+description = "Prefix field names with prefix:."
+input = "../bookshop.xml"

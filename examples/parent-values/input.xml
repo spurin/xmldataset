@@ -1,0 +1,11 @@
+<bookshops>
+    <shop number="1">
+        <book><title>Dune</title></book>
+        <book><title>Emma</title></book>
+        <manager>Ann</manager>
+    </shop>
+    <shop number="2">
+        <book><title>Ulysses</title></book>
+        <manager>Bob</manager>
+    </shop>
+</bookshops>

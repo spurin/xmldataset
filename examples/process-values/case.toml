@@ -1,0 +1,5 @@
+description = "Transform values with a process function."
+input = "../bookshop.xml"
+
+[options.process]
+to_upper = "str.upper"

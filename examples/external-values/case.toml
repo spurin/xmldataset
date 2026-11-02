@@ -1,0 +1,2 @@
+description = "Copy a value from an enclosing element into each record."
+input = "../bookshop.xml"

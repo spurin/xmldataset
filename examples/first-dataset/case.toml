@@ -1,0 +1,2 @@
+description = "Extract the title and author of every book."
+input = "../bookshop.xml"

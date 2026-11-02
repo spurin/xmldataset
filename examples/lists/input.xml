@@ -1,0 +1,10 @@
+<colleagues>
+    <colleague>
+        <name>Ann</name>
+        <phones><phone>+1 202-663-9108</phone><phone>+1 202-663-9107</phone></phones>
+    </colleague>
+    <colleague>
+        <name>Bob</name>
+        <phones><phone>+1 347-999-5454</phone></phones>
+    </colleague>
+</colleagues>

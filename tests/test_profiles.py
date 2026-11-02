@@ -203,7 +203,7 @@ def test_writer_rejects_what_the_text_syntax_cannot_express(profile: Profile) ->
     "path", CASES + EXAMPLES, ids=lambda p: f"{p.parent.parent.name}/{p.parent.name}"
 )
 def test_text_round_trip(path: Path) -> None:
-    profile = Profile.from_dsl(path.read_text())
+    profile = Profile.from_dsl(path.read_text(encoding="utf-8"))
     assert Profile.from_dsl(profile.to_dsl()) == profile
 
 
@@ -313,7 +313,7 @@ def validator() -> jsonschema.Draft202012Validator:
 def test_schema_accepts_every_profile(
     path: Path, validator: jsonschema.Draft202012Validator
 ) -> None:
-    validator.validate(compile_profile(path.read_text()).to_dict())
+    validator.validate(compile_profile(path.read_text(encoding="utf-8")).to_dict())
 
 
 @pytest.mark.parametrize(

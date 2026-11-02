@@ -54,6 +54,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: uv run coverage run -m pytest
+        env:
+          # Report text I/O that relies on the platform encoding (cp1252 on
+          # Windows); pytest's filterwarnings=error turns it into a failure.
+          PYTHONWARNDEFAULTENCODING: "1"
       - run: uv run coverage report
 
   docs:

@@ -20,8 +20,8 @@ PROFILE = "shop\n  book\n    id = dataset:books\n    title = dataset:books datas
 
 @pytest.fixture
 def files(tmp_path: Path) -> tuple[Path, Path]:
-    (tmp_path / "doc.xml").write_text(XML)
-    (tmp_path / "profile.txt").write_text(PROFILE)
+    (tmp_path / "doc.xml").write_text(XML, encoding="utf-8")
+    (tmp_path / "profile.txt").write_text(PROFILE, encoding="utf-8")
     return tmp_path / "profile.txt", tmp_path / "doc.xml"
 
 
@@ -73,7 +73,7 @@ def test_run_csv(
         str(target),
     )
     assert code == 0
-    rows = list(csv.DictReader(io.StringIO(target.read_text())))
+    rows = list(csv.DictReader(io.StringIO(target.read_text(encoding="utf-8"))))
     assert rows == [
         {"id": "1", "title": "Dune", "tag": '["a", "b"]'},
         {"id": "2", "title": "Emma", "tag": ""},
@@ -86,7 +86,9 @@ def test_csv_needs_a_dataset_when_there_are_several(files: tuple[Path, Path]) ->
 
 
 def test_run_with_globals_namespaces_and_stdin(tmp_path: Path) -> None:
-    (tmp_path / "p.yaml").write_text("a:feed:\n  a:entry:\n    title: e\n")
+    (tmp_path / "p.yaml").write_text(
+        "a:feed:\n  a:entry:\n    title: e\n", encoding="utf-8"
+    )
     xml = b'<feed xmlns="urn:a"><entry><title>T</title></entry></feed>'
     result = subprocess.run(
         [
@@ -130,7 +132,7 @@ def test_validate_reports_errors_with_locations(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     bad = tmp_path / "bad.txt"
-    bad.write_text("shop\n  book = datset:x\n")
+    bad.write_text("shop\n  book = datset:x\n", encoding="utf-8")
     code, _, err = run(capsys, "validate", str(bad))
     assert code == 1
     assert (
@@ -142,7 +144,7 @@ def test_validate_reports_errors_with_locations(
 def test_errors_are_reported_without_a_traceback(
     files: tuple[Path, Path], tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    (tmp_path / "broken.xml").write_text("<shop>")
+    (tmp_path / "broken.xml").write_text("<shop>", encoding="utf-8")
     code, _, err = run(capsys, "run", str(files[0]), str(tmp_path / "broken.xml"))
     assert code == 1
     assert err.startswith("xmldataset: error: no element found")
@@ -154,7 +156,9 @@ def test_errors_are_reported_without_a_traceback(
 def test_process_functions_cannot_come_from_the_command_line(
     files: tuple[Path, Path], tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    (tmp_path / "p.txt").write_text("shop\n  book\n    title = dataset:t,process:up\n")
+    (tmp_path / "p.txt").write_text(
+        "shop\n  book\n    title = dataset:t,process:up\n", encoding="utf-8"
+    )
     code, _, err = run(capsys, "run", str(tmp_path / "p.txt"), str(files[1]))
     assert code == 1
     assert "only be supplied from Python" in err

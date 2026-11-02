@@ -123,8 +123,9 @@ read. Each callback receives `{dataset: [records]}`:
 - `counter` is the batch size; the last batch may be smaller.
 - Datasets without a `coderef` are returned as usual.
 
-{func}`~xmldataset.iter_records` is often simpler: batch records with
-{func}`itertools.batched` or send them wherever you like.
+{func}`~xmldataset.iter_records` is often simpler: send each record wherever you
+like, or batch them yourself (on Python 3.12 and newer, with
+{func}`itertools.batched`).
 
 ## Namespaces
 

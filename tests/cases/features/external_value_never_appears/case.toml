@@ -1,0 +1,1 @@
+description = "A forward-referenced external value that never appears leaves the field out; 1.x wrote '' into later records (docs/migration.md)."

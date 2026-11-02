@@ -1,0 +1,20 @@
+{
+  "books": [
+    {
+      "title": "XML Developer's Guide",
+      "style": "Computer"
+    },
+    {
+      "title": "Midnight Rain",
+      "style": "Fantasy"
+    },
+    {
+      "title": "Maeve Ascendant",
+      "style": "Fantasy"
+    },
+    {
+      "title": "Oberon's Legacy",
+      "style": "Fantasy"
+    }
+  ]
+}

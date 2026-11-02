@@ -1,0 +1,12 @@
+{
+  "books": [
+    {
+      "title": "Dune",
+      "rating": "5"
+    },
+    {
+      "title": "Emma",
+      "rating": "not rated"
+    }
+  ]
+}

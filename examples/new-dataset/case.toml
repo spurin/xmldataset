@@ -1,0 +1,2 @@
+description = "Mark where records start with __NEW_DATASET__."
+input = "../bookshop.xml"

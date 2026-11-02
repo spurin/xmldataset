@@ -1,0 +1,2 @@
+description = "Send the same values to more than one dataset."
+input = "../bookshop.xml"

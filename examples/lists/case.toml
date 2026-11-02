@@ -1,0 +1,2 @@
+description = "Collect repeated elements into a list."
+v2_only = true  # uses syntax 1.x cannot read

@@ -1,0 +1,11 @@
+{
+  "posts": [
+    {
+      "title": "First post",
+      "thumbnail": "https://example.com/1.png"
+    },
+    {
+      "title": "Second post"
+    }
+  ]
+}

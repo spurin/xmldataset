@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<colleagues>
+    <colleague>
+        <title>The Boss</title>
+        <phone>+1 202-663-9108</phone>
+        <email>boss@the_company.com</email>
+    </colleague>
+    <colleague>
+        <title>Admin Assistant</title>
+        <phone>+1 347-999-5454</phone>
+        <email>admin@the_company.com</email>
+    </colleague>
+    <colleague>
+        <title>Minion</title>
+        <phone>+1 792-123-4109</phone>
+    </colleague>
+</colleagues>

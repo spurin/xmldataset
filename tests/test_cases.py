@@ -1,4 +1,4 @@
-"""Data-driven cases in tests/cases/<group>/<name>/.
+"""Data-driven cases: tests/cases/<group>/<name>/ and the docs' examples/<name>/.
 
 Each case directory holds:
 
@@ -7,7 +7,8 @@ Each case directory holds:
 - ``expected.json``: the output xmldataset 2 must produce
 - ``legacy.json``: what 1.x produced, only when 2.0 deliberately differs
 - ``case.toml``: a description, optional ``input`` and ``[options]``, and
-  ``v2_only = true`` for profiles 1.x cannot read
+  ``v2_only = true`` for profiles 1.x cannot read. ``[options.process]`` maps
+  process names to import paths such as ``"str.upper"``
 
 Every case also runs with the profile converted to YAML and to JSON, and through
 the frozen 1.0.4 engine to pin the behaviour change (or lack of one).
@@ -16,6 +17,7 @@ the frozen 1.0.4 engine to pin the behaviour change (or lack of one).
 from __future__ import annotations
 
 import json
+import pydoc
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -26,7 +28,7 @@ import pytest
 import xmldataset
 from tests.legacy.engine import parse_using_profile as legacy_parse
 
-CASES_DIR = Path(__file__).parent / "cases"
+ROOT = Path(__file__).parent.parent
 
 
 @dataclass
@@ -38,6 +40,17 @@ class Case:
     legacy: Any
     options: dict[str, Any]
     v2_only: bool
+
+
+def _options(options: dict[str, Any]) -> dict[str, Any]:
+    if "process" in options:
+        options = options | {
+            "process": {
+                name: pydoc.locate(target)
+                for name, target in options["process"].items()
+            }
+        }
+    return options
 
 
 def load_case(path: Path) -> Case:
@@ -56,12 +69,16 @@ def load_case(path: Path) -> Case:
         legacy=json.loads(legacy_file.read_text())
         if legacy_file.exists()
         else expected,
-        options=meta.get("options", {}),
+        options=_options(meta.get("options", {})),
         v2_only=meta.get("v2_only", False),
     )
 
 
-CASES = sorted(p.parent for p in CASES_DIR.glob("*/*/profile.dsl"))
+CASES = sorted(
+    p.parent
+    for pattern in ("tests/cases/*/*/profile.dsl", "examples/*/profile.dsl")
+    for p in ROOT.glob(pattern)
+)
 IDS = [f"{p.parent.name}/{p.name}" for p in CASES]
 
 

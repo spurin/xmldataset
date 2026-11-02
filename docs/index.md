@@ -66,7 +66,6 @@ profiles
 formats
 python
 cli
-migration
 ```
 
 ```{toctree}

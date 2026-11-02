@@ -18,7 +18,6 @@ database.
 equivalent, and you can convert between them at any time.
 
 - Documentation: <https://xmldataset.readthedocs.io>
-- Upgrading from 1.x: <https://xmldataset.readthedocs.io/en/stable/migration.html>
 
 ## Installation
 

@@ -7,16 +7,13 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## 2.0.0 (unreleased)
 
-A rewrite. Most profiles work unchanged; where output differs, 1.x was usually
-putting values in the wrong record. See
-[Upgrading from 1.x](https://xmldataset.readthedocs.io/en/stable/migration.html)
-for every change, with before and after examples.
+A new engine, profile formats and tooling. Most profiles work unchanged.
 
 ### Added
 
 - YAML and JSON profiles, equivalent to the text syntax, with a JSON Schema for
   editor completion (`xmldataset.json_schema()`, published on the docs site).
-  PyYAML is now a dependency, so YAML works without any extra install.
+  PyYAML is a dependency, so YAML works without any extra install.
 - `iter_records()`: stream `(dataset, record)` pairs as each record completes.
 - `compile_profile()`, `load_profile()` and the `Profile` model, which converts
   between formats with `to_dsl()`, `to_yaml()`, `to_json()` and `to_dict()`.
@@ -37,26 +34,21 @@ for every change, with before and after examples.
 ### Changed
 
 - The engine streams the document in document order, in bounded memory, with no
-  recursion limit on document depth.
-- A record never combines values from two occurrences of the same element. 1.x
-  could put one element's values into the previous element's record when a
-  field was missing.
+  limit on document depth.
 - Values from enclosing elements are copied into every record inside them, even
   when they appear after those records.
-- `__NEW_DATASET__` creates records only when a value is written, so there are
-  no empty `{}` records. Elements below it no longer split records, and each
-  occurrence of any element carrying it starts a new record.
+- Records are created only when a value is written. Below an element with
+  `__NEW_DATASET__`, elements no longer split records, and each occurrence of
+  any element carrying it starts a new record.
 - External values are scoped to the element that encloses their source and
-  their use. A missing external value leaves the field out instead of writing
-  `""`. Forward references (a value used before it appears) are supported.
-- `global_values` are added to every record.
-- Profiles are validated strictly. Unknown modifiers or directives, fields
-  without a dataset, and inconsistent indentation are errors with a line and
-  column. Repeated names merge instead of overwriting.
-- `parse_using_profile()` takes its options as keyword arguments, so misspelt
-  options raise `TypeError`. With `dispatch`, it returns the datasets that had
-  no dispatcher (`{}` when all were dispatched) instead of `None`. Per-dataset
-  dispatch settings fall back to `__generic__`.
+  their use, and may be used before they appear in the document.
+- Profiles are validated strictly, with a line and column for each problem:
+  unknown modifiers or directives, fields without a dataset, inconsistent
+  indentation, directives naming something the profile never produces, and
+  names that are both ignored and captured. Repeated names merge.
+- `parse_using_profile()` takes its options as keyword arguments. With
+  `dispatch`, it returns the datasets that have no dispatcher (`{}` when all
+  are dispatched); per-dataset dispatch settings fall back to `__generic__`.
 - Process functions are checked before parsing.
 - `python -m xmldataset` runs the command-line tool.
 - Python 3.11 or newer is required.
@@ -72,15 +64,14 @@ for every change, with before and after examples.
 
 ### Fixed
 
-- Values containing spaces, `:` or `=` crashed the profile parser.
-- An unindented field line, such as `catalog = dataset:d`, was misread.
-- Over-indented or inconsistently indented lines silently attached entries to
-  the wrong element or dropped them.
-- Configuring `dispatch` for only some datasets crashed with `TypeError`.
-- A missing `__DATASET_PROCESSING__` function raised `UnboundLocalError` instead
-  of a clear error.
-- Importing xmldataset emitted a `SyntaxWarning` on Python 3.12 and newer.
-- xmldataset no longer sets the level of the `"default"` logger.
+- Records when an element is missing some of its fields.
+- `global_values` on records started by `__NEW_DATASET__` or external values.
+- An unindented field line, such as `catalog = dataset:d`.
+- Indentation that does not line up with an outer level.
+- `dispatch` configured for only some datasets.
+- The error for a missing `__DATASET_PROCESSING__` function.
+- A `SyntaxWarning` on import with Python 3.12 and newer.
+- The level of the `"default"` logger is no longer changed.
 
 ## 1.0.4 - 2020-05-30
 

@@ -138,8 +138,7 @@ record started by a repeated field (rule 3) only inherits values from enclosing
 elements, not the other values of its own element; use `list:true` to keep
 repeated values in one record.
 
-Here the second book has no author. Its record is left without one; the third
-book's author does not leak into it:
+Here the second book has no author, so its record has none:
 
 ```{include} _generated/examples/missing-elements/input.md
 ```

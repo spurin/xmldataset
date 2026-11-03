@@ -47,6 +47,6 @@ html_static_path = ["_static"]
 html_extra_path = ["_generated/extra"]
 html_theme_options = {
     "source_repository": "https://github.com/spurin/xmldataset/",
-    "source_branch": "master",
+    "source_branch": "main",
     "source_directory": "docs/",
 }

@@ -36,7 +36,7 @@ xmldataset = "xmldataset._cli:main"
 [project.urls]
 Homepage = "https://github.com/spurin/xmldataset"
 Documentation = "https://xmldataset.readthedocs.io"
-Changelog = "https://github.com/spurin/xmldataset/blob/master/CHANGELOG.md"
+Changelog = "https://github.com/spurin/xmldataset/blob/main/CHANGELOG.md"
 Issues = "https://github.com/spurin/xmldataset/issues"
 
 [dependency-groups]

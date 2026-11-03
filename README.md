@@ -117,10 +117,10 @@ xmldataset convert profile.txt --to yaml
 
 ## Contributing
 
-See [CONTRIBUTING.md](https://github.com/spurin/xmldataset/blob/master/CONTRIBUTING.md).
+See [CONTRIBUTING.md](https://github.com/spurin/xmldataset/blob/main/CONTRIBUTING.md).
 Changes are recorded in
-[CHANGELOG.md](https://github.com/spurin/xmldataset/blob/master/CHANGELOG.md).
+[CHANGELOG.md](https://github.com/spurin/xmldataset/blob/main/CHANGELOG.md).
 
 ## License
 
-BSD-3-Clause. See [LICENSE](https://github.com/spurin/xmldataset/blob/master/LICENSE).
+BSD-3-Clause. See [LICENSE](https://github.com/spurin/xmldataset/blob/main/LICENSE).
